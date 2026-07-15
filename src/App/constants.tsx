@@ -147,6 +147,15 @@ export const PORTFOLIO_DATA: PortfolioData = {
         "https://github.com/naneps/cv-md/blob/main/assets/cs1.png?raw=true",
         "https://github.com/naneps/cv-md/blob/main/assets/cs2.png?raw=true"
       ]
+    },
+    {
+      id: "project_7_nande_studio",
+      title: "Nande Studio — Landing Page",
+      description: "A production-quality responsive landing page concept for a digital product studio. Built as a runnable workspace project with clear positioning, service architecture, selected work, testimonials, and a conversion-focused contact section.",
+      technologies: ["HTML", "CSS", "JavaScript", "Responsive Design"],
+      related_skills: ["Frontend", "UI/UX", "Web Performance"],
+      webLink: "/demos/nande-studio/",
+      imageUrls: ["/icons/liquid/projects.png"]
     }
   ],
   linkedIn: "https://www.linkedin.com/in/nandang-eka-prasetya",
@@ -214,6 +223,7 @@ export const ICONS: { [key: string]: LucideIcon } = {
   'project_detail': FileJson2, 
   'github_profile_view': Github, 
   'guest_book_icon': MessageSquare, 
+  'playground_icon': Sparkles,
   'command_palette_icon': Command,
   'toggle_sidebar': Eye,
   'about_portfolio': HelpCircle,
@@ -307,6 +317,18 @@ export const SIDEBAR_ITEMS: SidebarItemConfig[] = [
       { id: 'projects.json', label: 'projects.json', fileName: 'projects.json', icon: ICONS['projects.json'], type: 'file', title: 'projects.json', actionType: 'open_tab', featureId: 'projectsView' }, // Added featureId for projects.json
       { id: 'contact.json', label: 'contact.json', fileName: 'contact.json', icon: ICONS['contact.json'], type: 'file', title: 'contact.json', actionType: 'open_tab', featureId: 'explorer' },
       {
+        id: 'landing-page-folder',
+        label: 'LANDING_PAGE',
+        icon: ICONS.folder_closed_icon,
+        isFolder: true,
+        defaultOpen: true,
+        actionType: 'open_tab',
+        featureId: 'projectsView',
+        children: [
+          { id: 'landing-page-index.html', label: 'index.html', fileName: 'landing-page-index.html', icon: ICONS.file_code_icon, type: 'file', title: 'index.html', actionType: 'open_tab', featureId: 'projectsView' },
+        ],
+      },
+      {
         id: 'cv-generator-folder',
         label: 'CV_GENERATOR',
         icon: ICONS.folder_closed_icon,
@@ -326,6 +348,17 @@ export const SIDEBAR_ITEMS: SidebarItemConfig[] = [
           },
         ],
       },
+    ],
+  },
+  {
+    id: 'playground-folder',
+    label: 'PLAYGROUND',
+    icon: ICONS.folder_closed_icon,
+    isFolder: true,
+    defaultOpen: true,
+    actionType: 'open_tab',
+    children: [
+      { id: 'playground.tools', label: 'tools.playground', icon: ICONS.playground_icon, type: 'playground', title: 'Playground', actionType: 'open_tab' },
     ],
   },
    {

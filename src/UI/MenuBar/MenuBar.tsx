@@ -16,11 +16,14 @@ const MenuBar: React.FC<MenuBarProps> = ({ menuItems, activeMenu, toggleMenu, re
       {menuItems.map((menu) => (
          <div key={menu.name} className="relative">
           <button
-            onClick={() => menu.subItems && toggleMenu(menu.name)}
-            className={`px-2 py-0.5 rounded focus:outline-none transition-colors duration-150 ease-in-out text-xs text-[var(--menubar-foreground)]
+            onClick={() => toggleMenu(menu.name)}
+            onMouseEnter={() => {
+              if (activeMenu && activeMenu !== menu.name) toggleMenu(menu.name);
+            }}
+            className={`menubar-glass-trigger px-2.5 py-1 rounded-lg focus:outline-none transition-all duration-300 ease-out text-xs text-[var(--menubar-foreground)]
               ${activeMenu === menu.name ? 'bg-[var(--titlebar-menu-active-background)]' : 'hover:bg-[var(--menubar-hover-background)]'}`}
-            title={menu.subItems ? menu.name : `${menu.name} (Not Implemented)`}
-            aria-haspopup={!!menu.subItems}
+            title={menu.name}
+            aria-haspopup="menu"
             aria-expanded={activeMenu === menu.name}
           >
             {menu.name}

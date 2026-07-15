@@ -647,7 +647,7 @@ const App: React.FC = () => {
     }
 
     if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-    if (isRunAction && tabType === 'json_preview') {
+    if (isRunAction && (tabType === 'json_preview' || tabType === 'web_preview')) {
       simulateTerminalRun(tabTitle);
       setIsPreviewTabLoading(true);
       loadingTimeoutRef.current = window.setTimeout(() => setIsPreviewTabLoading(false), 1200);
@@ -919,12 +919,28 @@ const App: React.FC = () => {
         disabled: cvGenStatus !== 'active',
       });
     }
+    if (item.id === 'landing-page-index.html') {
+      items.push({
+        label: 'Run Landing Page',
+        action: () => {
+          simulateTerminalRun('npm run dev — Nande Studio', 1800, [
+            'Resolving landing page modules...',
+            'Compiling responsive styles...',
+            'Starting preview server...',
+            'Ready at /demos/nande-studio/',
+          ]);
+          handleOpenTab({ id: 'project_7_nande_studio', fileName: 'project_7_nande_studio', type: 'web_preview', title: 'Nande Studio · Preview' }, true, focusedEditorPaneId);
+          playSound('command-execute');
+        },
+        icon: ICONS.PlayIcon,
+      });
+    }
     if (items.length > 0) {
       setSidebarContextMenuState({ x: event.pageX, y: event.pageY, items, visible: true, itemId: item.id });
       playSound('ui-click');
       addAppLog('debug', `Opened context menu for sidebar item ${item.label}.`, 'User');
     }
-  }, [handleRunCVGenerator, addAppLog, featuresStatus, addNotificationAndLog]);
+  }, [handleRunCVGenerator, handleOpenTab, focusedEditorPaneId, simulateTerminalRun, addAppLog, featuresStatus, addNotificationAndLog]);
   const closeSidebarContextMenu = useCallback(() => setSidebarContextMenuState(prev => ({ ...prev, visible: false })), []);
   const toggleTerminalPanel = useCallback(() => {
     if (featuresStatus.terminal !== 'active') {
@@ -1827,6 +1843,7 @@ const App: React.FC = () => {
     if (activeTab.type === 'github_profile_view') return { username: activeTab.githubUsername || getGitHubUsername(), mockStats: MOCK_GITHUB_STATS, featureStatus: featuresStatus.githubProfileView };
     if (activeTab.type === 'guest_book') return { addAppLog, currentUser, userGuestBookNickname, userGitHubUsername, featureStatus: featuresStatus.guestBook }; 
     if (activeTab.type === 'spotify_view') return true;
+    if (activeTab.type === 'playground' || activeTab.type === 'web_preview') return true;
     if (activeTab.fileName) return generateFileContent(activeTab.fileName, PORTFOLIO_DATA);
     return null;
   }, [
@@ -1916,6 +1933,7 @@ const App: React.FC = () => {
     if (activeTab.type === 'github_profile_view') return { username: activeTab.githubUsername || getGitHubUsername(), mockStats: MOCK_GITHUB_STATS, featureStatus: featuresStatus.githubProfileView };
     if (activeTab.type === 'guest_book') return { addAppLog, currentUser, userGuestBookNickname, userGitHubUsername, featureStatus: featuresStatus.guestBook }; 
     if (activeTab.type === 'spotify_view') return true;
+    if (activeTab.type === 'playground' || activeTab.type === 'web_preview') return true;
     if (activeTab.fileName) return generateFileContent(activeTab.fileName, PORTFOLIO_DATA);
     return null;
   }, [

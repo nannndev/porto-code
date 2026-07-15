@@ -77,8 +77,15 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
         }
       }
     };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveMenu(null);
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, [activeMenu]);
 
   const menuConfig = generateMenuConfig({
@@ -105,6 +112,10 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
     onMoveEditorToOtherPane,
     featuresStatus, // Pass down
     addNotificationAndLog, // Pass down
+    canNavigateBack,
+    canNavigateForward,
+    onNavigateBack,
+    onNavigateForward,
   });
 
   const MenuDropdownIcon = ICONS.chevron_down_icon;
@@ -112,21 +123,21 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
   const renderSubItems = (items: AppMenuItem[], level = 0): JSX.Element => (
     <div
         className={`
-          ${level === 0 ? 'absolute top-full left-0 mt-1' : 'relative'}
+          ${level === 0 ? 'absolute top-[calc(100%+10px)] left-0' : 'relative'}
           bg-[var(--menu-dropdown-background)] border border-[var(--menu-dropdown-border)]
-          rounded shadow-lg py-1 z-50 min-w-[220px] text-[var(--menu-item-foreground)]
+          menu-dropdown rounded-2xl shadow-lg p-1.5 z-[220] min-w-[248px] text-[var(--menu-item-foreground)]
         `}
     >
       {items.map((subItem, index) => {
         if (subItem.separator) {
-          return <hr key={`sep-${index}`} className="my-1 border-[var(--menubar-separator-color)]" />;
+          return <hr key={`sep-${index}`} className="menu-glass-separator my-1.5 border-[var(--menubar-separator-color)]" />;
         }
         const itemKey = subItem.label || `menu-item-${index}`;
 
         return subItem.subItems ? (
           <div key={itemKey} className="relative group/submenu">
             <button
-              className={`w-full text-left px-3 py-1.5 text-xs flex justify-between items-center transition-colors
+              className={`menu-item-glass w-full text-left px-3 py-2 text-xs flex justify-between items-center transition-all rounded-xl
                           ${subItem.isSelected ? 'bg-[var(--menu-item-selected-background)] text-[var(--menu-item-selected-foreground)]' : 'hover:bg-[var(--menu-item-hover-background)] hover:text-[var(--menu-item-hover-foreground)]'}`}
               onMouseEnter={() => playSound('ui-click')}
             >
@@ -152,7 +163,7 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
               }
               setActiveMenu(null);
             }}
-            className={`w-full text-left px-3 py-1.5 text-xs flex items-center transition-colors
+            className={`menu-item-glass w-full text-left px-3 py-2 text-xs flex items-center transition-all rounded-xl
                         ${subItem.isSelected ? 'bg-[var(--menu-item-selected-background)] text-[var(--menu-item-selected-foreground)]' : 'hover:bg-[var(--menu-item-hover-background)] hover:text-[var(--menu-item-hover-foreground)]'}`}
              onMouseEnter={() => playSound('ui-click')}
           >
@@ -166,7 +177,7 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
 
 
   return (
-    <div className={`bg-[var(--titlebar-background)] text-[var(--titlebar-foreground)] px-1 sm:px-2 py-1.5 border-b border-[var(--titlebar-border)] flex items-center justify-between text-xs h-[36px] flex-shrink-0 ${className || ''}`}>
+    <div className={`relative z-[200] overflow-visible bg-[var(--titlebar-background)] text-[var(--titlebar-foreground)] px-1 sm:px-2 py-1.5 border-b border-[var(--titlebar-border)] flex items-center justify-between text-xs h-[36px] flex-shrink-0 ${className || ''}`}>
       <div className="flex items-center space-x-0.5 sm:space-x-1" ref={menuRef}>
         <ICONS.file_code_icon size={20} className="text-[var(--titlebar-icon-blue)] ml-1" />
         <MenuBar menuItems={menuConfig} activeMenu={activeMenu} toggleMenu={toggleMenu} renderSubItems={renderSubItems} />

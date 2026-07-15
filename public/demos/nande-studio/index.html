@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Nande Studio builds calm, scalable digital products for operational businesses." />
+  <title>Nande Studio — Digital products that move work forward</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --ink:#14213d; --paper:#f6f2e9; --blue:#1647d8; --coral:#ff6542; --lime:#d7f25e; --line:rgba(20,33,61,.16); }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:Manrope,sans-serif; overflow-x:hidden; }
+    a { color:inherit; text-decoration:none; }
+    button { font:inherit; }
+    .wrap { width:min(1180px,calc(100% - 40px)); margin:auto; }
+    .nav { height:76px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.04em; }
+    .brand-mark { width:30px; height:30px; border-radius:50%; background:var(--blue); position:relative; }
+    .brand-mark:after { content:""; position:absolute; width:10px; height:10px; background:var(--lime); border-radius:50%; right:-3px; top:1px; }
+    .nav-links { display:flex; align-items:center; gap:28px; font-size:13px; font-weight:600; }
+    .button { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px; padding:0 20px; border:1px solid var(--ink); border-radius:100px; font-size:13px; font-weight:700; transition:.25s ease; }
+    .button:hover { transform:translateY(-2px); box-shadow:4px 5px 0 var(--ink); }
+    .button.primary { background:var(--blue); color:white; border-color:var(--blue); }
+    .hero { min-height:650px; display:grid; grid-template-columns:1.1fr .9fr; align-items:center; gap:70px; padding:74px 0 88px; }
+    .eyebrow { display:flex; align-items:center; gap:10px; font:500 11px DM Mono,monospace; text-transform:uppercase; letter-spacing:.12em; }
+    .eyebrow:before { content:""; width:30px; height:2px; background:var(--coral); }
+    h1 { margin:22px 0 24px; font-size:clamp(52px,7vw,94px); line-height:.94; letter-spacing:-.075em; max-width:800px; }
+    h1 em { color:var(--blue); font-style:normal; position:relative; white-space:nowrap; }
+    .hero-copy p { max-width:590px; font-size:17px; line-height:1.75; color:#526078; }
+    .hero-actions { display:flex; gap:12px; margin-top:34px; }
+    .orbit { aspect-ratio:1; position:relative; display:grid; place-items:center; }
+    .orbit:before,.orbit:after { content:""; position:absolute; border:1px solid var(--ink); border-radius:50%; inset:5%; animation:spin 20s linear infinite; }
+    .orbit:after { inset:19%; border-style:dashed; animation-direction:reverse; animation-duration:15s; }
+    .device { width:55%; aspect-ratio:.75; border:2px solid var(--ink); border-radius:34px; background:var(--blue); padding:12px; transform:rotate(7deg); box-shadow:18px 20px 0 var(--coral); z-index:2; }
+    .screen { height:100%; border-radius:22px; background:var(--paper); padding:22px 17px; display:flex; flex-direction:column; gap:10px; }
+    .screen span { display:block; height:10px; background:#d8d7d0; border-radius:8px; }
+    .screen span:first-child { width:45%; background:var(--coral); }
+    .screen .chart { flex:1; margin-top:12px; border-radius:14px; background:linear-gradient(145deg,var(--lime),#f0ffae); position:relative; overflow:hidden; }
+    .screen .chart:after { content:"↗"; position:absolute; font-size:90px; font-weight:800; right:8px; bottom:-26px; color:var(--blue); }
+    .orb { position:absolute; width:48px; aspect-ratio:1; border-radius:50%; background:var(--lime); border:1px solid var(--ink); top:8%; right:15%; animation:float 5s ease-in-out infinite; }
+    .proof { border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .proof-row { display:grid; grid-template-columns:1.4fr repeat(3,1fr); }
+    .proof-cell { padding:28px 24px; border-right:1px solid var(--line); }
+    .proof-cell:last-child { border:0; }
+    .proof-label { font:500 10px DM Mono,monospace; text-transform:uppercase; letter-spacing:.12em; color:#68748a; }
+    .proof-value { font-size:25px; font-weight:800; margin-top:5px; letter-spacing:-.04em; }
+    .section { padding:110px 0; }
+    .section-head { display:grid; grid-template-columns:.6fr 1.4fr; gap:50px; margin-bottom:54px; }
+    h2 { font-size:clamp(38px,5vw,68px); line-height:1; letter-spacing:-.06em; margin:0; }
+    .section-intro { font-size:16px; line-height:1.8; color:#536079; max-width:570px; }
+    .services { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--ink); }
+    .service { padding:30px 26px 38px; border-right:1px solid var(--line); transition:.25s ease; }
+    .service:last-child { border:0; }
+    .service:hover { background:#fffaf0; transform:translateY(-6px); }
+    .num { font:500 11px DM Mono,monospace; color:var(--blue); }
+    .service h3 { font-size:22px; margin:42px 0 12px; letter-spacing:-.04em; }
+    .service p { font-size:13px; line-height:1.75; color:#647087; }
+    .work { background:var(--ink); color:white; }
+    .work .eyebrow:before { background:var(--lime); }
+    .work-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:18px; margin-top:50px; }
+    .case { min-height:420px; border-radius:26px; padding:28px; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; }
+    .case.blue { background:var(--blue); }
+    .case.coral { background:var(--coral); color:var(--ink); }
+    .case-meta { font:500 10px DM Mono,monospace; text-transform:uppercase; letter-spacing:.1em; }
+    .case h3 { font-size:clamp(32px,4vw,58px); line-height:1; letter-spacing:-.06em; margin:0; max-width:520px; }
+    .case-art { position:absolute; width:220px; height:220px; border:2px solid currentColor; border-radius:50%; right:-35px; top:35px; opacity:.35; }
+    .case-art:after { content:""; position:absolute; inset:35px; border:2px dashed currentColor; border-radius:50%; }
+    .quote { display:grid; grid-template-columns:1fr 2fr; gap:50px; align-items:start; }
+    blockquote { margin:0; font-size:clamp(28px,4vw,52px); line-height:1.15; letter-spacing:-.05em; }
+    .person { margin-top:24px; font:500 11px DM Mono,monospace; color:#667188; }
+    .cta { background:var(--lime); padding:90px 0; }
+    .cta-row { display:flex; justify-content:space-between; align-items:end; gap:40px; }
+    .cta h2 { max-width:750px; }
+    footer { padding:34px 0; background:var(--ink); color:white; }
+    .footer-row { display:flex; align-items:center; justify-content:space-between; font:400 11px DM Mono,monospace; color:#aeb7c8; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes float { 50% { transform:translateY(18px); } }
+    @media(max-width:800px){ .nav-links a:not(.button){display:none}.hero{grid-template-columns:1fr;padding-top:55px}.orbit{max-width:480px;margin:auto}.proof-row{grid-template-columns:1fr 1fr}.proof-cell{border-bottom:1px solid var(--line)}.section-head,.quote{grid-template-columns:1fr}.services{grid-template-columns:1fr}.service{border-right:0;border-bottom:1px solid var(--line)}.work-grid{grid-template-columns:1fr}.cta-row{align-items:start;flex-direction:column}.case{min-height:340px}}
+    @media(max-width:480px){.wrap{width:min(100% - 24px,1180px)}.hero-actions{align-items:stretch;flex-direction:column}.proof-row{grid-template-columns:1fr}.proof-cell{border-right:0}.section{padding:75px 0}.device{width:60%}.footer-row{align-items:flex-start;flex-direction:column;gap:12px}}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <nav class="wrap nav"><a class="brand" href="#"><span class="brand-mark"></span>Nande Studio</a><div class="nav-links"><a href="#services">Services</a><a href="#work">Work</a><a href="#about">About</a><a class="button" href="#contact">Start a project ↗</a></div></nav>
+  <main>
+    <section class="wrap hero"><div class="hero-copy"><div class="eyebrow">Independent digital product studio</div><h1>We turn complex work into <em>clear products.</em></h1><p>Strategy, interface, and engineering for operational businesses that need software people can trust every day.</p><div class="hero-actions"><a class="button primary" href="#contact">Discuss your project →</a><a class="button" href="#work">See selected work</a></div></div><div class="orbit" aria-hidden="true"><div class="orb"></div><div class="device"><div class="screen"><span></span><span></span><span></span><div class="chart"></div></div></div></div></section>
+    <section class="proof"><div class="wrap proof-row"><div class="proof-cell"><div class="proof-label">Built for real operations</div><div class="proof-value">From first flow to production</div></div><div class="proof-cell"><div class="proof-label">Products shipped</div><div class="proof-value">08+</div></div><div class="proof-cell"><div class="proof-label">Daily transactions</div><div class="proof-value">200+</div></div><div class="proof-cell"><div class="proof-label">Core focus</div><div class="proof-value">Mobile + Web</div></div></div></section>
+    <section class="wrap section" id="services"><div class="section-head"><div class="eyebrow">What we do</div><div><h2>One partner from messy idea to reliable release.</h2><p class="section-intro">We connect product thinking with implementation, keeping decisions close to the people who actually build the product.</p></div></div><div class="services"><article class="service"><div class="num">01 / Direction</div><h3>Product clarity</h3><p>Map the workflow, remove assumptions, and define the smallest useful version worth shipping.</p></article><article class="service"><div class="num">02 / Experience</div><h3>Interface systems</h3><p>Responsive, accessible UI designed around real tasks—not decorative screens disconnected from operations.</p></article><article class="service"><div class="num">03 / Delivery</div><h3>Full-stack build</h3><p>Production-ready mobile and web experiences with practical architecture, APIs, and performance.</p></article></div></section>
+    <section class="work section" id="work"><div class="wrap"><div class="eyebrow">Selected work</div><div class="work-grid"><article class="case blue"><div class="case-meta">Hospitality · Ordering ecosystem</div><div class="case-art"></div><h3>A calmer way to run every order.</h3></article><article class="case coral"><div class="case-meta">Retail · Inventory</div><div class="case-art"></div><h3>Stock truth, across every branch.</h3></article></div></div></section>
+    <section class="wrap section" id="about"><div class="quote"><div class="eyebrow">Client note</div><div><blockquote>“The strongest software disappears into the workflow. It makes the next action obvious and the whole operation feel lighter.”</blockquote><div class="person">NANDANG EKA PRASETYA — PRODUCT ENGINEER</div></div></div></section>
+    <section class="cta" id="contact"><div class="wrap cta-row"><div><div class="eyebrow">Have a product in mind?</div><h2>Let’s make the complicated part feel simple.</h2></div><a class="button" href="mailto:ekaprasetya2244@gmail.com">ekaprasetya2244@gmail.com ↗</a></div></section>
+  </main>
+  <footer><div class="wrap footer-row"><span>© 2026 NANDE STUDIO</span><span>INDRAMAYU · JAKARTA · REMOTE</span><span>DESIGN + ENGINEERING</span></div></footer>
+</body>
+</html>
