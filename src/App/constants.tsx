@@ -154,7 +154,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
   tiktok: "https://www.tiktok.com/@_nannnde",
   otherSocial: {
     name: "GitHub",
-    url: "https://github.com/naneps"
+    url: "https://github.com/nannndev"
   }
 };
 
@@ -364,7 +364,7 @@ export const SIDEBAR_ITEMS: SidebarItemConfig[] = [
 
 
 export const APP_VERSION = "1.8.8"; 
-export const REPO_URL = "https://github.com/naneps";
+export const REPO_URL = "https://github.com/nannndev/porto-code";
 
 export const COMMANDS_CONFIG: Omit<AppCommandType, 'action' | 'isSelected'>[] = [];
 

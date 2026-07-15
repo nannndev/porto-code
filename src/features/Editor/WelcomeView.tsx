@@ -44,13 +44,20 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
     }
   };
   
-  const FeatureCard: React.FC<{icon: React.ElementType, title: string, description: string, buttonText: string, onButtonClick: () => void}> = ({icon: Icon, title, description, buttonText, onButtonClick}) => (
-    <div className="bg-[var(--sidebar-item-hover-background)]/30 backdrop-blur-md p-5 rounded-xl border border-[var(--border-color)]/60 hover:border-[var(--text-accent)]/50 flex flex-col text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[var(--text-accent)]/5 group/card">
-      <div className="flex items-center mb-2.5">
-        <div className="p-2 rounded-lg bg-[var(--text-accent)]/10 text-[var(--text-accent)] mr-3 group-hover/card:bg-[var(--text-accent)] group-hover/card:text-[var(--text-inverse)] transition-all duration-300">
-          <Icon size={20} className="flex-shrink-0" />
+  const FeatureCard: React.FC<{icon: React.ElementType, iconSrc: string, title: string, description: string, buttonText: string, onButtonClick: () => void}> = ({icon: Icon, iconSrc, title, description, buttonText, onButtonClick}) => (
+    <div className="liquid-card bg-[var(--sidebar-item-hover-background)]/30 backdrop-blur-md p-5 rounded-xl border border-[var(--border-color)]/60 hover:border-[var(--text-accent)]/50 flex flex-col text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[var(--text-accent)]/5 group/card">
+      <div className="relative flex items-center mb-3">
+        <img
+          src={iconSrc}
+          alt=""
+          width="64"
+          height="64"
+          className="liquid-content-icon w-14 h-14 sm:w-16 sm:h-16 object-contain mr-3 flex-shrink-0 transition-transform duration-300 group-hover/card:scale-105"
+        />
+        <div>
+          <h3 className="text-sm sm:text-base font-bold text-[var(--editor-foreground)] tracking-tight">{title}</h3>
+          <Icon size={14} aria-hidden="true" className="mt-1 text-[var(--text-accent)] opacity-70" />
         </div>
-        <h3 className="text-sm sm:text-base font-bold text-[var(--editor-foreground)] tracking-tight">{title}</h3>
       </div>
       <p className="text-xs text-[var(--text-muted)] mb-4 flex-grow leading-relaxed">{description}</p>
       <button
@@ -66,10 +73,10 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
   return (
     <div className="relative flex flex-col items-center w-full min-h-full p-6 sm:p-8 md:p-12 bg-[var(--editor-background)] text-[var(--editor-foreground)] text-center overflow-y-auto">
       {/* Background glow decorator */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(0,122,204,0.12),transparent_70%)] pointer-events-none"></div>
+      <div className="welcome-aurora absolute inset-0 pointer-events-none"></div>
       
       <div className="relative flex flex-col items-center max-w-4xl w-full z-10">
-        <div className="p-3 bg-[var(--sidebar-item-hover-background)]/50 rounded-2xl border border-[var(--border-color)]/40 mb-4 animate-bounce duration-1000">
+        <div className="liquid-logo p-3 bg-[var(--sidebar-item-hover-background)]/50 rounded-2xl border border-[var(--border-color)]/40 mb-4">
           <AppLogoIcon size={52} className="text-[var(--text-accent)]" />
         </div>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-emerald-400 to-indigo-500">
@@ -90,6 +97,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FeatureCard 
               icon={ChatIcon}
+              iconSrc="/icons/liquid/ai-assistant.png"
               title="AI Assistant"
               description="Ask questions about Nandang's experience, project architecture, or tools. Powered by Gemini."
               buttonText="Open AI Chat"
@@ -97,6 +105,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
             />
             <FeatureCard 
               icon={TerminalFeatureIcon}
+              iconSrc="/icons/liquid/terminal.png"
               title="Interactive Terminal"
               description="Execute VSCode terminal command lines in real time. Type 'help' to get started."
               buttonText="Focus Terminal"
@@ -104,6 +113,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
             />
             <FeatureCard 
               icon={GuestBookFeatureIcon}
+              iconSrc="/icons/liquid/guest-book.png"
               title="Guest Book"
               description="Leave comments, feedback, or say hi to share your thoughts on the portfolio."
               buttonText="Open Guest Book"
@@ -113,7 +123,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
-          <div className="bg-[var(--sidebar-background)]/40 backdrop-blur-md p-5 sm:p-6 rounded-xl border border-[var(--border-color)]/60 text-left transition-all duration-300 hover:border-[var(--border-color)]">
+          <div className="liquid-card bg-[var(--sidebar-background)]/40 backdrop-blur-md p-5 sm:p-6 rounded-xl border border-[var(--border-color)]/60 text-left transition-all duration-300 hover:border-[var(--border-color)]">
             <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--text-accent)] mb-3">Start Exploring</h2>
             <ul className="space-y-2">
               {[
@@ -137,7 +147,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
             </ul>
           </div>
 
-          <div className="bg-[var(--sidebar-background)]/40 backdrop-blur-md p-5 sm:p-6 rounded-xl border border-[var(--border-color)]/60 text-left transition-all duration-300 hover:border-[var(--border-color)]">
+          <div className="liquid-card bg-[var(--sidebar-background)]/40 backdrop-blur-md p-5 sm:p-6 rounded-xl border border-[var(--border-color)]/60 text-left transition-all duration-300 hover:border-[var(--border-color)]">
               <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--text-accent)] mb-3">How to Navigate</h2>
               <ul className="space-y-2 text-xs sm:text-sm text-[var(--text-muted)]">
                   {[
@@ -154,7 +164,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
           </div>
         </div>
 
-        <div className="text-left w-full bg-[var(--sidebar-background)]/40 backdrop-blur-md p-5 sm:p-6 rounded-xl border border-[var(--border-color)]/60 mb-8 transition-all duration-300 hover:border-[var(--border-color)]">
+        <div className="liquid-card text-left w-full bg-[var(--sidebar-background)]/40 backdrop-blur-md p-5 sm:p-6 rounded-xl border border-[var(--border-color)]/60 mb-8 transition-all duration-300 hover:border-[var(--border-color)]">
           <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--text-accent)] mb-3">Project Info</h2>
           <ul className="space-y-2">
             <li>
@@ -169,7 +179,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
                   <span className="font-medium">View Source Repository</span>
                 </div>
                 <span className="text-[10px] text-[var(--text-muted)] group-hover/button:text-[var(--link-hover-foreground)] flex items-center">
-                  github.com/naneps <Play size={8} className="ml-1" />
+                  github.com/nannndev <Play size={8} className="ml-1" />
                 </span>
               </a>
             </li>

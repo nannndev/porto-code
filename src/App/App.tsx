@@ -1985,7 +1985,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--app-background)] text-[var(--text-default)] overflow-hidden">
+    <div className="app-shell flex flex-col h-screen bg-[var(--app-background)] text-[var(--text-default)] overflow-hidden">
       <TitleBar
         onToggleSidebar={toggleSidebarVisibility}
         isSidebarVisible={isSidebarVisible}

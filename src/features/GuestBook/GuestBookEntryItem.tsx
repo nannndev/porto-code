@@ -7,6 +7,7 @@ import { CheckCircle, AlertTriangle, MessageSquare, Info, ExternalLink, Github }
 
 interface GuestBookEntryItemProps {
   entry: GuestBookEntry;
+  entryNumber: number;
   currentUser: FirebaseUser | null;
   onReaction: (emoji: string) => void;
   className?: string;
@@ -64,7 +65,7 @@ const UserProfileDisplay: React.FC<UserProfileLinkProps> = ({ nickname, avatarUr
 };
 
 
-const GuestBookEntryItem: React.FC<GuestBookEntryItemProps> = ({ entry, currentUser, onReaction, className }) => {
+const GuestBookEntryItem: React.FC<GuestBookEntryItemProps> = ({ entry, entryNumber, currentUser, onReaction, className }) => {
   const [showAllReactions, setShowAllReactions] = useState(false);
 
   const aiStatusInfo = AI_STATUS_ICONS[entry.aiValidationStatus] || AI_STATUS_ICONS.pending;
@@ -103,7 +104,7 @@ const GuestBookEntryItem: React.FC<GuestBookEntryItemProps> = ({ entry, currentU
   };
 
   return (
-    <div className={`group p-4 rounded-xl border border-[var(--border-color)]/70 bg-[var(--sidebar-background)] hover:border-[var(--border-color)] transition-all duration-200 ${className || ''} ${entry.isNew ? 'animate-spawnItem ring-1 ring-[var(--focus-border)]/30' : ''}`}>
+    <article className={`guestbook-entry group p-4 sm:p-5 rounded-2xl border border-[var(--border-color)]/70 bg-[var(--sidebar-background)] hover:border-[var(--focus-border)]/40 transition-all duration-200 ${className || ''} ${entry.isNew ? 'animate-spawnItem ring-1 ring-[var(--focus-border)]/30' : ''}`}>
       
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -114,7 +115,10 @@ const GuestBookEntryItem: React.FC<GuestBookEntryItemProps> = ({ entry, currentU
           authProvider={entry.authProvider}
         />
         
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+          <span className="hidden sm:inline text-[9px] text-[var(--text-accent)]/70 font-mono tracking-wider">
+            MSG-{String(entryNumber).padStart(3, '0')}
+          </span>
           <span className="text-[10px] text-[var(--text-muted)] font-mono tracking-tight">
             {formatTimestamp(entry.timestamp)}
           </span>
@@ -135,7 +139,7 @@ const GuestBookEntryItem: React.FC<GuestBookEntryItemProps> = ({ entry, currentU
       </div>
 
       {/* Message */}
-      <div className="text-[13px] leading-relaxed text-[var(--editor-foreground)] whitespace-pre-wrap pl-1 pr-2 mb-4">
+      <div className="text-sm leading-7 text-[var(--editor-foreground)] whitespace-pre-wrap pl-1 pr-2 mb-5">
         {entry.message}
       </div>
 
@@ -188,7 +192,7 @@ const GuestBookEntryItem: React.FC<GuestBookEntryItemProps> = ({ entry, currentU
           </button>
         )}
       </div>
-    </div>
+    </article>
   );
 };
 

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { FirebaseUser } from '../../Utils/firebase'; 
-import { Github, LogIn, LogOut } from 'lucide-react'; 
+import { Github, LogOut, PenLine } from 'lucide-react';
 import { ICONS } from '../../App/constants';
 import { GuestBookFormProps } from '../../App/types'; 
 
@@ -36,16 +36,22 @@ const GuestBookForm: React.FC<GuestBookFormProps> = ({
   };
 
   return (
-    <div className="p-3 sm:p-4 border-b border-[var(--border-color)] bg-[var(--sidebar-background)]">
+    <div className="guestbook-compose liquid-card p-4 sm:p-5 rounded-2xl border border-[var(--border-color)] bg-[var(--sidebar-background)]">
       {currentUser ? (
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-[var(--text-accent)] mb-1">
+              <PenLine size={13} /> New transmission
+            </div>
+            <p className="text-xs text-[var(--text-muted)]">Share a thought, question, or honest feedback.</p>
+          </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               {currentUser.photoURL && (
                 <img
                   src={currentUser.photoURL}
                   alt={effectiveNickname || 'User Avatar'} // Use effectiveNickname
-                  className="w-8 h-8 rounded-full mr-2 border border-[var(--focus-border)]"
+                  className="w-9 h-9 rounded-full mr-2.5 border border-[var(--focus-border)] object-cover"
                 />
               )}
               <span className="text-sm font-medium text-[var(--editor-foreground)]">
@@ -55,7 +61,7 @@ const GuestBookForm: React.FC<GuestBookFormProps> = ({
             <button
               type="button"
               onClick={onSignOut}
-              className="text-xs text-[var(--text-muted)] hover:text-[var(--link-foreground)] px-2 py-1 rounded hover:bg-[var(--editor-tab-inactive-background)] transition-colors flex items-center"
+              className="text-[10px] text-[var(--text-muted)] hover:text-[var(--link-foreground)] px-2 py-1.5 rounded-lg hover:bg-[var(--editor-tab-inactive-background)] transition-colors flex items-center"
               title="Sign out"
             >
               <LogOut size={14} className="mr-1" /> Sign Out
@@ -67,20 +73,20 @@ const GuestBookForm: React.FC<GuestBookFormProps> = ({
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Leave a message for Nandang..."
               maxLength={MAX_MESSAGE_LENGTH}
-              rows={3}
-              className="w-full p-2 text-sm bg-[var(--editor-background)] text-[var(--editor-foreground)] border border-[var(--border-color)] rounded-md focus:outline-none focus:border-[var(--focus-border)] focus:ring-1 focus:ring-[var(--focus-border)] placeholder-[var(--text-muted)] resize-none"
+              rows={6}
+              className="w-full p-3.5 text-sm leading-relaxed bg-[var(--editor-background)] text-[var(--editor-foreground)] border border-[var(--border-color)] rounded-xl focus:outline-none focus:border-[var(--focus-border)] focus:ring-1 focus:ring-[var(--focus-border)] placeholder-[var(--text-muted)] resize-none transition-colors"
               aria-label="Guest book message input"
               required
               disabled={isSubmitting}
             />
-            <p className="text-xs text-right text-[var(--text-muted)] mt-1">
+            <p className={`text-[10px] font-mono text-right mt-1.5 ${message.length > 450 ? 'text-[var(--notification-warning-foreground)]' : 'text-[var(--text-muted)]'}`}>
               {message.length}/{MAX_MESSAGE_LENGTH}
             </p>
           </div>
           <button
             type="submit"
             disabled={isSubmitting || !message.trim() || message.length > MAX_MESSAGE_LENGTH}
-            className="w-full sm:w-auto px-5 py-2 bg-[var(--focus-border)] hover:bg-[#0066b3] active:scale-[0.985] text-white rounded-md text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full px-5 py-2.5 bg-[var(--modal-button-background)] hover:bg-[var(--modal-button-hover-background)] active:scale-[0.985] text-[var(--modal-button-foreground)] rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <ICONS.SpinnerIcon size={17} className="animate-spin" />
@@ -91,21 +97,23 @@ const GuestBookForm: React.FC<GuestBookFormProps> = ({
           </button>
         </form>
       ) : (
-        <div className="text-center">
-          <p className="text-md font-semibold text-[var(--editor-foreground)] mb-3">
-            Sign in to leave a message!
-          </p>
-          <div className="flex flex-col sm:flex-row sm:justify-center gap-2 sm:gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-[var(--text-accent)] mb-2">
+            <PenLine size={13} /> Write to the log
+          </div>
+          <p className="text-lg font-bold text-[var(--editor-foreground)]">Sign in, then leave your mark.</p>
+          <p className="text-xs leading-relaxed text-[var(--text-muted)] mt-1 mb-5">Your profile gives every message a real author and lets you react to other visitors.</p>
+          <div className="flex flex-col gap-2.5">
             <button
               onClick={() => onSignIn('google')}
-              className="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--focus-border)] transition-colors"
+              className="flex items-center justify-center px-4 py-2.5 bg-white text-gray-800 border border-white/70 rounded-xl text-sm font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--focus-border)] transition-colors"
               title="Sign in with Google"
             >
               <GoogleIcon size={18} className="mr-2" /> Sign in with Google
             </button>
             <button
               onClick={() => onSignIn('github')}
-              className="flex items-center justify-center px-4 py-2 bg-[#333] text-white border border-[#333] rounded-md text-sm font-medium hover:bg-[#444] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--focus-border)] transition-colors"
+              className="flex items-center justify-center px-4 py-2.5 bg-[#171b22] text-white border border-white/15 rounded-xl text-sm font-semibold hover:bg-[#242a33] focus:outline-none focus:ring-2 focus:ring-[var(--focus-border)] transition-colors"
               title="Sign in with GitHub"
             >
               <Github size={18} className="mr-2" /> Sign in with GitHub
