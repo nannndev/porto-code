@@ -31,6 +31,24 @@ interface GitHubProfileViewProps {
 
 const GITHUB_API_BASE_URL = 'https://api.github.com';
 
+const getGitHubApiError = async (response: Response, resource: string): Promise<string> => {
+  const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+  if (response.status === 403 && rateLimitRemaining === '0') {
+    return `GitHub API rate limit reached while loading ${resource}. Please try again later.`;
+  }
+
+  let apiMessage = '';
+  try {
+    const body = await response.clone().json() as { message?: string };
+    apiMessage = body.message || '';
+  } catch {
+    // Some network intermediaries return a non-JSON response.
+  }
+
+  const statusLabel = response.statusText || `HTTP ${response.status}`;
+  return `Unable to load GitHub ${resource} (${statusLabel})${apiMessage ? `: ${apiMessage}` : ''}.`;
+};
+
 const getLanguageColor = (lang: string): string => {
   const colors: { [key: string]: string } = {
     javascript: '#f1e05a',
@@ -156,30 +174,21 @@ export const GitHubProfileView: React.FC<GitHubProfileViewProps> = ({ username, 
         ]);
 
         if (!profileRes.ok) {
-          if (profileRes.status === 403 && profileRes.headers.get('X-RateLimit-Remaining') === '0') {
-            throw new Error('API rate limit exceeded (profile). Try again later.');
-          }
-          throw new Error(`Failed to fetch GitHub profile: ${profileRes.statusText}`);
+          throw new Error(await getGitHubApiError(profileRes, 'profile'));
         }
         const profileData: GitHubUser = await profileRes.json();
         setProfile(profileData);
         addAppLog('debug', 'GitHub profile data fetched.', 'GitHubProfileView', { name: profileData.name });
 
         if (!eventsRes.ok) {
-          if (eventsRes.status === 403 && eventsRes.headers.get('X-RateLimit-Remaining') === '0') {
-            throw new Error('API rate limit exceeded (events). Try again later.');
-          }
-          throw new Error(`Failed to fetch GitHub events: ${eventsRes.statusText}`);
+          throw new Error(await getGitHubApiError(eventsRes, 'events'));
         }
         const eventsData: GitHubEvent[] = await eventsRes.json();
         setEvents(eventsData);
         addAppLog('debug', `GitHub events fetched: ${eventsData.length}.`, 'GitHubProfileView');
         
         if (!reposRes.ok) {
-          if (reposRes.status === 403 && reposRes.headers.get('X-RateLimit-Remaining') === '0') {
-            throw new Error('API rate limit exceeded (repos). Try again later.');
-          }
-          throw new Error(`Failed to fetch GitHub repositories: ${reposRes.statusText}`);
+          throw new Error(await getGitHubApiError(reposRes, 'repositories'));
         }
         const reposData: GitHubRepo[] = await reposRes.json();
         setRepos(reposData);

@@ -39,6 +39,7 @@ export const useThemeManager = (
 
   const applyThemeVariables = useCallback(() => {
     const selectedTheme = PREDEFINED_THEMES.find(theme => theme.name === currentThemeName) || PREDEFINED_THEMES[0];
+    document.documentElement.dataset.theme = selectedTheme.name;
     const selectedFontFamily = FONT_FAMILY_OPTIONS.find(font => font.id === currentFontFamilyId) || FONT_FAMILY_OPTIONS[0];
     const selectedEditorFontSize = FONT_SIZE_OPTIONS.find(size => size.id === currentEditorFontSizeId) || FONT_SIZE_OPTIONS[1];
     const selectedTerminalFontSize = terminalFontSizesExt.find(size => size.id === currentTerminalFontSizeIdExt) || terminalFontSizesExt[0];

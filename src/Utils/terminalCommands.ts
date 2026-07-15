@@ -159,7 +159,7 @@ export const COMMANDS: Record<string, CommandDefinition> = {
   repo: {
     description: 'Opens the portfolio GitHub repository in a new tab.',
     handler: () => {
-      window.open(PORTFOLIO_DATA.otherSocial?.url || 'https://github.com/naneps', '_blank');
+      window.open(PORTFOLIO_DATA.otherSocial?.url || 'https://github.com/nannndev', '_blank');
       return 'Opening repository...';
     }
   },

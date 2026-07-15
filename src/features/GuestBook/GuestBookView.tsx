@@ -24,6 +24,7 @@ import { LogLevel } from '../../App/types';
 import { playSound } from '../../Utils/audioUtils';
 import MaintenanceView from '../../UI/MaintenanceView'; // Import MaintenanceView
 import { incrementStatistic } from '../../Utils/statisticsUtils'; // Added
+import { BookHeart, MessageCircle, ShieldCheck, Users } from 'lucide-react';
 
 const GuestBookView: React.FC<ViewProps> = ({ addAppLog, currentUser, userGuestBookNickname, userGitHubUsername, featureStatus }) => {
   const [entries, setEntries] = useState<GuestBookEntry[]>([]);
@@ -288,45 +289,80 @@ const GuestBookView: React.FC<ViewProps> = ({ addAppLog, currentUser, userGuestB
   }
 
   return (
-    <div className="flex flex-col h-full bg-[var(--editor-background)] text-[var(--editor-foreground)] overflow-y-auto relative">
+    <div className="guestbook-view h-full bg-[var(--editor-background)] text-[var(--editor-foreground)] overflow-y-auto relative">
       {isFetchingInitialEntries && (
         <div className="linear-progress-bar" aria-label="Loading guest book entries...">
           <div className="linear-progress-bar-indicator"></div>
         </div>
       )}
-      <div className="flex-shrink-0">
-        <GuestBookForm
-          currentUser={currentUser}
-          effectiveNickname={effectiveNickname}
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
-          onSubmitMessage={handleSubmitMessage}
-          isSubmitting={isLoading}
-        />
-      </div>
-      
-      {error && (
-        <div className="p-2 bg-red-500/20 text-red-300 text-xs text-center flex-shrink-0" role="alert">
-          {error}
-        </div>
-      )}
+      <div className="guestbook-ambient" aria-hidden="true" />
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <header className="flex flex-col gap-5 border-b border-[var(--border-color)]/70 pb-6 mb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex items-center gap-4">
+            <img src="/icons/liquid/guest-book.png" alt="" className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-contain liquid-content-icon" />
+            <div>
+              <p className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.24em] text-[var(--text-accent)] mb-1">Open channel · PORTO CODE</p>
+              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[var(--editor-foreground)]">Leave a trace.</h1>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1 max-w-xl">A public log for hellos, feedback, and the conversations that begin after the code ships.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-[var(--text-muted)] font-mono">
+            <span className="inline-flex items-center gap-1.5"><MessageCircle size={14} className="text-[var(--text-accent)]" /> {entries.length} messages</span>
+            <span className="inline-flex items-center gap-1.5"><Users size={14} className="text-[var(--text-accent)]" /> Public</span>
+          </div>
+        </header>
 
-      <div className="p-2 sm:p-3 space-y-3">
-        {entries.length === 0 && !isFetchingInitialEntries && (
-          <div className="text-center text-[var(--text-muted)] py-10">
-            <ICONS.guest_book_icon size={48} className="mx-auto mb-3 opacity-50" />
-            <p className="text-lg">The Guest Book is empty.</p>
-            <p className="text-sm">Be the first to leave a message!</p>
+        {error && (
+          <div className="mb-5 px-4 py-3 rounded-xl bg-[var(--notification-error-background)] text-[var(--notification-error-foreground)] border border-[var(--notification-error-border)] text-xs" role="alert">
+            {error}
           </div>
         )}
-        {entries.map(entry => (
-          <GuestBookEntryItem
-            key={entry.id}
-            entry={entry}
-            currentUser={currentUser}
-            onReaction={(emoji) => handleReaction(entry.id, emoji)}
-          />
-        ))}
+
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.45fr)] gap-6 lg:gap-8 items-start">
+          <aside className="lg:sticky lg:top-6 space-y-3">
+            <GuestBookForm
+              currentUser={currentUser}
+              effectiveNickname={effectiveNickname}
+              onSignIn={handleSignIn}
+              onSignOut={handleSignOut}
+              onSubmitMessage={handleSubmitMessage}
+              isSubmitting={isLoading}
+            />
+            <div className="flex items-center gap-2 px-2 text-[10px] leading-relaxed text-[var(--text-muted)]">
+              <ShieldCheck size={14} className="text-[var(--text-accent)] flex-shrink-0" />
+              Messages are checked before joining the public log.
+            </div>
+          </aside>
+
+          <section aria-label="Guest book messages">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BookHeart size={16} className="text-[var(--text-accent)]" />
+                <h2 className="text-xs font-bold uppercase tracking-[0.18em]">Visitor log</h2>
+              </div>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">Newest first</span>
+            </div>
+
+            <div className="space-y-3">
+              {entries.length === 0 && !isFetchingInitialEntries && (
+                <div className="guestbook-empty text-center text-[var(--text-muted)] py-16 px-6 rounded-2xl border border-dashed border-[var(--border-color)]">
+                  <MessageCircle size={34} className="mx-auto mb-3 text-[var(--text-accent)] opacity-70" />
+                  <p className="text-base font-semibold text-[var(--editor-foreground)]">No transmissions yet.</p>
+                  <p className="text-xs mt-1">Start the log with the first message.</p>
+                </div>
+              )}
+              {entries.map((entry, index) => (
+                <GuestBookEntryItem
+                  key={entry.id}
+                  entry={entry}
+                  entryNumber={entries.length - index}
+                  currentUser={currentUser}
+                  onReaction={(emoji) => handleReaction(entry.id, emoji)}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
