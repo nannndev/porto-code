@@ -500,6 +500,11 @@ const githubDarkDefaultProperties: ThemeProperties = {
 // desktop, while editor content stays calm and high-contrast.
 const liquidGlassProperties: ThemeProperties = {
   ...githubDarkDefaultProperties,
+  '--glass-surface': 'rgba(255, 255, 255, 0.09)',
+  '--glass-blur': '4px',
+  '--glass-saturation': '160%',
+  '--glass-radius': '15px',
+  '--glass-border': 'rgba(255, 255, 255, 0.25)',
   '--app-background': '#070A14',
   '--text-default': '#F4F7FF',
   '--text-muted': '#9BA8C7',

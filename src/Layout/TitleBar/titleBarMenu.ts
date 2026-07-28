@@ -1,6 +1,6 @@
 import { AppMenuItem, SidebarItemConfig, Tab, ProjectDetail, EditorPaneId, FeaturesStatusState, FeatureId, LogLevel, NotificationType } from '../../App/types';
 import { ALL_FEATURE_IDS, ICONS as AppIcons } from '../../App/constants'; // Use AppIcons to avoid conflict
-import { LucideIcon, Command, Eye, EyeOff, Play, FileTerminal, Cat, BarChart3 as StatisticsIconLucide, Settings, Columns, Rows, ArrowLeftRight, ListChecks, Github, MessageSquare } from 'lucide-react';
+import { LucideIcon, Command, Eye, EyeOff, Play, FileTerminal, Cat, BarChart3 as StatisticsIconLucide, Settings, Columns, Rows, ArrowLeftRight, ListChecks, Github, MessageSquare, FileCode2, FolderOpen, Undo2, Redo2, Copy, ClipboardPaste, Scissors, MousePointer2, Search, ArrowLeft, ArrowRight, PanelLeft, PanelRight } from 'lucide-react';
 
 interface MenuConfigArgs {
   onOpenCommandPalette: () => void;
@@ -26,6 +26,10 @@ interface MenuConfigArgs {
   onToggleSoundMute: () => void;
   featuresStatus: FeaturesStatusState;
   addNotificationAndLog: (message: string, type: NotificationType, duration?: number, actions?: any[], icon?: LucideIcon) => void;
+  canNavigateBack: boolean;
+  canNavigateForward: boolean;
+  onNavigateBack: () => void;
+  onNavigateForward: () => void;
 }
 
 export const generateMenuConfig = (args: MenuConfigArgs): { name: string; subItems?: AppMenuItem[] }[] => {
@@ -64,10 +68,56 @@ export const generateMenuConfig = (args: MenuConfigArgs): { name: string; subIte
 
   const allSidebarFiles = getAllFileItems(args.sidebarItems);
 
+  const runEditorCommand = (command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll') => {
+    const succeeded = document.execCommand(command);
+    if (!succeeded && command === 'paste') {
+      addNotificationAndLog('Paste is controlled by your browser. Use Cmd/Ctrl + V in the active editor.', 'info', 4000, undefined, ClipboardPaste);
+    }
+  };
+
+  const openSidebarFile = (item: SidebarItemConfig) => args.onRunItem({
+    id: item.id,
+    fileName: item.fileName || item.id,
+    title: item.title || item.label,
+    type: item.type || 'file',
+  });
+
   return [
-  { name: 'File' },
-  { name: 'Edit' },
-  { name: 'Selection' },
+  {
+    name: 'File',
+    subItems: [
+      {
+        label: 'Open File',
+        icon: FolderOpen,
+        subItems: allSidebarFiles.map(item => ({ label: item.label, action: () => openSidebarFile(item), icon: item.icon || FileCode2 })),
+      },
+      { label: 'Open Landing Page', action: () => window.open('/demos/nande-studio/index.html', '_blank', 'noopener,noreferrer'), icon: FileCode2 },
+      { separator: true },
+      { label: 'Command Palette...', action: args.onOpenCommandPalette, icon: Command },
+    ],
+  },
+  {
+    name: 'Edit',
+    subItems: [
+      { label: 'Undo', action: () => runEditorCommand('undo'), icon: Undo2 },
+      { label: 'Redo', action: () => runEditorCommand('redo'), icon: Redo2 },
+      { separator: true },
+      { label: 'Cut', action: () => runEditorCommand('cut'), icon: Scissors },
+      { label: 'Copy', action: () => runEditorCommand('copy'), icon: Copy },
+      { label: 'Paste', action: () => runEditorCommand('paste'), icon: ClipboardPaste },
+      { separator: true },
+      { label: 'Find in Workspace...', action: args.onOpenCommandPalette, icon: Search },
+    ],
+  },
+  {
+    name: 'Selection',
+    subItems: [
+      { label: 'Select All', action: () => runEditorCommand('selectAll'), icon: MousePointer2 },
+      { label: 'Focus Left Editor', action: () => args.onFocusEditorPane('left'), icon: PanelLeft },
+      { label: 'Focus Right Editor', action: () => args.onFocusEditorPane('right'), icon: PanelRight },
+      { label: 'Move Editor to Other Group', action: args.onMoveEditorToOtherPane, icon: ArrowLeftRight },
+    ],
+  },
   {
     name: 'View',
     subItems: [
@@ -105,7 +155,18 @@ export const generateMenuConfig = (args: MenuConfigArgs): { name: string; subIte
     ]
   },
   {
-    name: 'Go'
+    name: 'Go',
+    subItems: [
+      { label: 'Back', action: args.onNavigateBack, icon: ArrowLeft },
+      { label: 'Forward', action: args.onNavigateForward, icon: ArrowRight },
+      { separator: true },
+      {
+        label: 'Go to File',
+        icon: FileCode2,
+        subItems: allSidebarFiles.map(item => ({ label: item.label, action: () => openSidebarFile(item), icon: item.icon || FileCode2 })),
+      },
+      { label: 'Command Palette...', action: args.onOpenCommandPalette, icon: Command },
+    ],
   },
   {
     name: 'Run',

@@ -71,7 +71,7 @@ export interface PortfolioData {
 export interface Tab {
   id: string;
   title: string;
-  type: 'file' | 'project_detail' | 'ai_chat' | 'json_preview' | 'article_detail' | 'cv_preview' | 'settings_editor' | 'github_profile_view' | 'guest_book' | 'spotify_view' | 'extensions' | 'achievements' | 'support';
+  type: 'file' | 'project_detail' | 'web_preview' | 'playground' | 'ai_chat' | 'json_preview' | 'article_detail' | 'cv_preview' | 'settings_editor' | 'github_profile_view' | 'guest_book' | 'spotify_view' | 'extensions' | 'achievements' | 'support';
   fileName?: string; // For file-based tabs and json_preview of files or projects
   articleSlug?: string; // Remains for identifying which article is open
   articleId?: number; // Added to store dev.to article ID

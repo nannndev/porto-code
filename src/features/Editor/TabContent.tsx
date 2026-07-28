@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import markup from 'react-syntax-highlighter/dist/esm/languages/prism/markup';
 import remarkGfm from 'remark-gfm';
 import { ALL_FEATURE_IDS, ICONS } from '../../App/constants';
 import { AIChatInterfaceProps as AIChatInterfacePropsType, ArticleItem, SettingsEditorProps as EditorProps, FeatureStatus, GuestBookViewProps, MockGitHubStats, PortfolioData, ProjectDetail, ProjectListingItem, TabContentProps as TabContentPropsType } from '../../App/types';
@@ -20,10 +21,12 @@ import ArticleDetailView from '../articles/ArticleDetailView'; // Import the new
 import SupportView from '../Modals/SupportView';
 import CVPreview from './CVPreview';
 import JsonPreviewView from './JsonPreviewView';
+import PlaygroundView from '../Playground/PlaygroundView';
 
 
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('typescript', typescript); 
+SyntaxHighlighter.registerLanguage('html', markup);
 
 // This type is now defined in types.ts as AIChatInterfaceProps
 // We can use that directly or keep this local one if it's slightly different,
@@ -51,10 +54,26 @@ const TabContent: React.FC<TabContentPropsType> = ({
   const [finalSyntaxTheme, setFinalSyntaxTheme] = React.useState<any>({});
   const SparklesIcon = ICONS.SparklesIcon;
   const [aiProjectKeywords, setAiProjectKeywords] = useState(''); 
+  const [landingPageSource, setLandingPageSource] = useState('<!-- Loading landing page source... -->');
 
   React.useLayoutEffect(() => {
     setFinalSyntaxTheme(getSyntaxHighlighterTheme(currentThemeName));
   }, [currentThemeName]);
+
+  React.useEffect(() => {
+    if (tab.id !== 'landing-page-index.html') return;
+    let cancelled = false;
+    fetch('/demos/nande-studio/index.html')
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.text();
+      })
+      .then(source => { if (!cancelled) setLandingPageSource(source); })
+      .catch(error => {
+        if (!cancelled) setLandingPageSource(`<!-- Unable to load source: ${error.message} -->`);
+      });
+    return () => { cancelled = true; };
+  }, [tab.id]);
 
   const handleContextMenu = (event: React.MouseEvent) => {
     const isCVGeneratorScript = tab.fileName === 'generate_cv.ts';
@@ -171,6 +190,31 @@ const TabContent: React.FC<TabContentPropsType> = ({
     const settingsProps = content as EditorProps; 
     return <SettingsEditor {...settingsProps} />;
   }
+
+  if (tab.type === 'playground') {
+    return <PlaygroundView />;
+  }
+
+  if (tab.type === 'web_preview' || tab.id === 'project_7_nande_studio') {
+    return (
+      <div className="h-full w-full flex flex-col bg-[#0b1020]">
+        <div className="h-10 px-3 flex items-center justify-between border-b border-white/10 bg-[#11182b] text-slate-300 flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.5)]" />
+            <span className="text-[10px] font-mono truncate">localhost / demos / nande-studio</span>
+          </div>
+          <a href="/demos/nande-studio/index.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[10px] font-medium text-sky-300 hover:text-white transition-colors">
+            Open in browser <ExternalLink size={12} />
+          </a>
+        </div>
+        <iframe
+          src="/demos/nande-studio/index.html"
+          title="Nande Studio landing page preview"
+          className="w-full flex-1 border-0 bg-white"
+        />
+      </div>
+    );
+  }
   
   const getSyntaxHighlighterContent = (rawContent: any, language: string): string => {
     let contentStr = typeof rawContent === 'string' ? rawContent : '// Error: Expected code string';
@@ -179,6 +223,39 @@ const TabContent: React.FC<TabContentPropsType> = ({
     }
     return (contentStr && contentStr.trim() !== '') ? contentStr : `// No content to display for ${tab.fileName || 'this file'}`;
   };
+
+  if (tab.id === 'landing-page-index.html') {
+    return (
+      <div onContextMenu={handleContextMenu} className="h-full w-full flex flex-col bg-[var(--editor-background)]">
+        <div className="h-11 px-3 flex items-center justify-between border-b border-[var(--editor-tab-border)] flex-shrink-0">
+          <div className="min-w-0">
+            <p className="text-[10px] font-mono text-[var(--text-muted)] truncate">LANDING_PAGE / index.html</p>
+            <p className="text-[9px] text-[var(--text-muted)]/70">HTML · CSS · Responsive</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a href="/demos/nande-studio/index.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--editor-foreground)] hover:bg-[var(--sidebar-item-hover-background)] transition-colors">
+              Open HTML <ExternalLink size={11} />
+            </a>
+            <button onClick={() => onOpenProjectTab('project_7_nande_studio', 'Nande Studio · Preview')} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] hover:bg-[var(--modal-button-hover-background)] transition-colors">
+              <ICONS.PlayIcon size={11} /> Run preview
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 min-h-0">
+          <SyntaxHighlighter
+            language="html"
+            style={finalSyntaxTheme}
+            showLineNumbers
+            lineNumberStyle={{ color: 'var(--editor-line-number-foreground)', marginRight: '1em', fontFamily: 'var(--editor-font-family)' }}
+            className="h-full w-full"
+            customStyle={{ margin: 0, padding: '1rem', fontSize: '12px' }}
+          >
+            {landingPageSource}
+          </SyntaxHighlighter>
+        </div>
+      </div>
+    );
+  }
 
 
   if (tab.type === 'file' && tab.fileName === 'generate_cv.ts') {
