@@ -34,7 +34,7 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
   const [isDragOverEndZone, setIsDragOverEndZone] = useState<boolean>(false);
 
   if (tabs.length === 0 && !isLoading) {
-    return <div className={`h-[42px] bg-[var(--editor-tab-background)] border-b border-[var(--editor-tab-border)] relative flex-shrink-0 ${className || ''}`}></div>; 
+    return null;
   }
   const CloseIcon = ICONS.x_icon;
 

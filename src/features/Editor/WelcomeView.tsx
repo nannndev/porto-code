@@ -62,7 +62,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
       <p className="text-xs text-[var(--text-muted)] mb-4 flex-grow leading-relaxed">{description}</p>
       <button
         onClick={onButtonClick}
-        className="mt-auto self-start text-xs px-4 py-2 bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] font-medium rounded-lg hover:bg-[var(--modal-button-hover-background)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--modal-button-background)]/20 active:scale-[0.98] flex items-center"
+        className="liquid-btn mt-auto self-start text-xs px-4 py-2 bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] font-medium rounded-lg hover:bg-[var(--modal-button-hover-background)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--modal-button-background)]/20 active:scale-[0.98] flex items-center"
       >
         <Play size={12} className="mr-1.5" /> {buttonText}
       </button>

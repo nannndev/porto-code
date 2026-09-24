@@ -1945,7 +1945,7 @@ const App: React.FC = () => {
           isLoading={(isPreviewTabLoading && paneState.activeTabId?.endsWith('_preview')) || (paneState.activeTabId === 'guest_book_tab' && (activeContent as any)?.isFetchingInitialEntries)}
           onReorderTabs={(draggedTabId, targetTabId) => handleReorderOpenTabs(paneId, draggedTabId, targetTabId)}
           onRunCVGeneratorFromTab={handleRunCVGenerator}
-          className={focusedEditorPaneId === paneId ? 'border-b-2 border-[var(--focus-border)] -mb-px z-10' : ''}
+          className={focusedEditorPaneId === paneId && paneState.openTabs.length > 0 ? 'border-b-2 border-[var(--focus-border)] -mb-px z-10' : ''}
           paneId={paneId}
         />
         <Breadcrumbs activeTab={currentActiveTab} portfolioData={PORTFOLIO_DATA} onOpenTab={(config) => handleOpenTab(config, false, paneId)} paneId={paneId}/>

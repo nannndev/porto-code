@@ -14,7 +14,7 @@ interface BreadcrumbsProps {
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ activeTab, portfolioData, onOpenTab, className, paneId }) => {
   if (!activeTab) {
-    return <div className={`h-8 bg-[var(--breadcrumbs-background)] border-t border-[var(--border-color)] ${className || ''}`}></div>;
+    return null;
   }
 
   const getProjectTitleFromId = (projectId: string): string => {
