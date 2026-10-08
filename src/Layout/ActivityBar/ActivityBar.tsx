@@ -12,6 +12,8 @@ interface ActivityBarProps {
   activeViewId?: ActivityBarSelection;
   onOpenSettingsEditor: () => void; 
   className?: string; 
+  // 'horizontal' renders a bottom tab bar for the mobile layout.
+  orientation?: 'vertical' | 'horizontal';
 }
 
 const ActivityBar: React.FC<ActivityBarProps> = ({ 
@@ -19,8 +21,10 @@ const ActivityBar: React.FC<ActivityBarProps> = ({
   onReorder,
   activeViewId,
   onOpenSettingsEditor, 
-  className
+  className,
+  orientation = 'vertical',
 }) => {
+  const isHorizontal = orientation === 'horizontal';
   const SettingsIcon = ICONS.settings_icon;
   // Changed to AlertTriangle for a more direct warning indication
   const MaintenanceIcon = ICONS.AlertTriangle || AlertTriangle; 
@@ -81,8 +85,14 @@ const ActivityBar: React.FC<ActivityBarProps> = ({
   };
 
   return (
-    <div className={`w-12 bg-[var(--activitybar-background)] h-full flex flex-col justify-between items-center py-3 shadow-md flex-shrink-0 ${className || ''}`}>
-      <div className="flex flex-col space-y-1 w-full items-center">
+    <div
+      className={isHorizontal
+        ? `h-14 w-full bg-[var(--activitybar-background)] border-t border-[var(--titlebar-border)] flex flex-row items-center px-1 flex-shrink-0 ${className || ''}`
+        : `w-12 bg-[var(--activitybar-background)] h-full flex flex-col justify-between items-center py-3 shadow-md flex-shrink-0 ${className || ''}`}
+      role={isHorizontal ? 'tablist' : undefined}
+      aria-orientation={isHorizontal ? 'horizontal' : undefined}
+    >
+      <div className={isHorizontal ? 'flex flex-row flex-1 items-center justify-around overflow-x-auto no-scrollbar' : 'flex flex-col space-y-1 w-full items-center'}>
         {items.map((item) => {
           const isFeatureActive = item.status === 'active';
           const isActiveTab = activeViewId === item.viewId && isFeatureActive; // Tab is active only if feature is active
@@ -90,7 +100,7 @@ const ActivityBar: React.FC<ActivityBarProps> = ({
           const isDragOverTarget = dragOverItemId === item.id && !isBeingDragged;
           const isDisabledByMaintenance = !isFeatureActive;
 
-          let buttonClasses = `p-2.5 rounded focus:outline-none transition-colors duration-150 ease-in-out relative w-10 h-10 flex items-center justify-center`;
+          let buttonClasses = `p-2.5 rounded focus:outline-none transition-colors duration-150 ease-in-out relative ${isHorizontal ? 'w-11 h-11 flex-shrink-0' : 'w-10 h-10'} flex items-center justify-center`;
           
           if (isDisabledByMaintenance) {
             buttonClasses += ` text-[var(--activitybar-inactive-foreground)] opacity-50 cursor-not-allowed`;
@@ -107,7 +117,7 @@ const ActivityBar: React.FC<ActivityBarProps> = ({
           return (
             <button
               key={item.id}
-              draggable={isFeatureActive} // Only draggable if active
+              draggable={isFeatureActive && !isHorizontal} // Only draggable if active (no drag on touch tab bar)
               onDragStart={(e) => isFeatureActive && handleDragStart(e, item.id)}
               onDragOver={(e) => isFeatureActive && handleDragOver(e, item.id)}
               onDragEnter={(e) => isFeatureActive && handleDragEnter(e, item.id)}
@@ -124,7 +134,9 @@ const ActivityBar: React.FC<ActivityBarProps> = ({
             >
               {isActiveTab && !isDragOverTarget && ( 
                 <span 
-                  className="absolute left-0 top-1/2 transform -translate-y-1/2 w-0.5 h-6 bg-[var(--activitybar-active-border)] rounded-r-sm"
+                  className={isHorizontal
+                    ? "absolute top-0 left-1/2 transform -translate-x-1/2 h-0.5 w-6 bg-[var(--activitybar-active-border)] rounded-b-sm"
+                    : "absolute left-0 top-1/2 transform -translate-y-1/2 w-0.5 h-6 bg-[var(--activitybar-active-border)] rounded-r-sm"}
                   aria-hidden="true"
                 ></span>
               )}
@@ -137,7 +149,7 @@ const ActivityBar: React.FC<ActivityBarProps> = ({
         })}
       </div>
       
-      <div className="flex flex-col space-y-1">
+      <div className={isHorizontal ? 'flex flex-row flex-shrink-0' : 'flex flex-col space-y-1'}>
         {SettingsIcon && (
           <button
             onClick={handleSettingsIconClick} 

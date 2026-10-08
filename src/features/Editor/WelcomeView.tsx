@@ -2,7 +2,7 @@
 import React from 'react';
 import { ICONS, REPO_URL, SIDEBAR_ITEMS, APP_VERSION } from '../../App/constants';
 import { PortfolioData, SidebarItemConfig } from '../../App/types';
-import { Play, TerminalSquare, MessageSquare as GuestBookFeatureIcon } from 'lucide-react'; // Added icons for features
+import { Play, TerminalSquare, MessageSquare as GuestBookFeatureIcon, Download, Mail, Linkedin } from 'lucide-react'; // Added icons for features
 
 interface WelcomeViewProps {
   portfolioData: PortfolioData;
@@ -10,9 +10,10 @@ interface WelcomeViewProps {
   onOpenAIChat: () => void;
   onFocusTerminal: () => void; // New prop
   onOpenGuestBook: () => void; // New prop for Guest Book
+  onDownloadCV: () => void;
 }
 
-const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onOpenAIChat, onFocusTerminal, onOpenGuestBook }) => {
+const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onOpenAIChat, onFocusTerminal, onOpenGuestBook, onDownloadCV }) => {
   const AppLogoIcon = ICONS.file_code_icon || ICONS.default;
   const AboutIcon = ICONS['about.json'] || ICONS.default;
   const ProjectsIcon = ICONS['projects.json'] || ICONS.default;
@@ -85,9 +86,50 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ portfolioData, onOpenTab, onO
         <p className="text-sm sm:text-base text-[var(--text-muted)] mb-1.5 max-w-lg leading-relaxed">
           Welcome to the interactive workspace of <span className="text-[var(--text-default)] font-semibold">{portfolioData.name}</span>
         </p>
-        <p className="text-xs sm:text-sm text-[var(--text-muted)]/80 mb-8 max-w-xl leading-relaxed">
+        {portfolioData.role && (
+          <p className="text-sm sm:text-base font-medium text-[var(--text-accent)] mb-1.5">{portfolioData.role}</p>
+        )}
+        <p className="text-xs sm:text-sm text-[var(--text-muted)]/80 mb-4 max-w-xl leading-relaxed">
           A developer environment designed to showcase full-stack mobile & web engineering expertise.
         </p>
+
+        {portfolioData.availability && (
+          <div className="inline-flex items-center gap-2 mb-5 px-3 py-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs">
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+            </span>
+            {portfolioData.availability}
+          </div>
+        )}
+
+        {/* Primary actions for recruiters: reachable without learning the IDE metaphor. */}
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10">
+          <button
+            onClick={onDownloadCV}
+            className="liquid-btn inline-flex items-center gap-2 text-sm px-5 py-2.5 bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] font-semibold rounded-lg hover:bg-[var(--modal-button-hover-background)] transition-all duration-300 active:scale-[0.98]"
+          >
+            <Download size={16} aria-hidden="true" /> Download CV
+          </button>
+          {portfolioData.email && (
+            <a
+              href={`mailto:${portfolioData.email}`}
+              className="inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-lg border border-[var(--border-color)] text-[var(--text-default)] hover:border-[var(--text-accent)] hover:text-[var(--text-accent)] transition-colors duration-200"
+            >
+              <Mail size={16} aria-hidden="true" /> Email Me
+            </a>
+          )}
+          {portfolioData.linkedIn && (
+            <a
+              href={portfolioData.linkedIn}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-lg border border-[var(--border-color)] text-[var(--text-default)] hover:border-[var(--text-accent)] hover:text-[var(--text-accent)] transition-colors duration-200"
+            >
+              <Linkedin size={16} aria-hidden="true" /> LinkedIn
+            </a>
+          )}
+        </div>
 
         <div className="w-full mb-8">
           <div className="flex items-center mb-4">

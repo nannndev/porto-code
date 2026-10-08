@@ -32,6 +32,26 @@ SyntaxHighlighter.registerLanguage('typescript', typescript);
 // but for consistency, it's better to use the one from types.ts if they are identical.
 // For this fix, assuming `AIChatInterfacePropsType` from `types.ts` is the correct one.
 
+// Portfolio data files that have a rich, human-friendly preview in JsonPreviewView.
+const PREVIEWABLE_JSON_FILES = new Set(['about.json', 'experience.json', 'skills.json', 'contact.json']);
+const JSON_VIEW_MODE_STORAGE_KEY = 'portfolio-jsonViewMode';
+type JsonViewMode = 'preview' | 'code';
+
+const JsonViewModeToggle: React.FC<{ mode: JsonViewMode; onChange: (mode: JsonViewMode) => void }> = ({ mode, onChange }) => (
+  <div className="absolute top-2 right-3 z-10 flex rounded-md border border-[var(--border-color)] bg-[var(--editor-background)]/90 backdrop-blur text-xs overflow-hidden" role="group" aria-label="View mode">
+    {(['preview', 'code'] as const).map(option => (
+      <button
+        key={option}
+        onClick={() => onChange(option)}
+        aria-pressed={mode === option}
+        className={`px-3 py-1 capitalize transition-colors ${mode === option ? 'bg-[var(--text-accent)]/20 text-[var(--text-accent)] font-semibold' : 'text-[var(--text-muted)] hover:text-[var(--text-default)]'}`}
+      >
+        {option}
+      </button>
+    ))}
+  </div>
+);
+
 const TabContentInner: React.FC<TabContentPropsType> = ({
   tab,
   content, 
@@ -53,6 +73,13 @@ const TabContentInner: React.FC<TabContentPropsType> = ({
   const [finalSyntaxTheme, setFinalSyntaxTheme] = React.useState<any>({});
   const SparklesIcon = ICONS.SparklesIcon;
   const [aiProjectKeywords, setAiProjectKeywords] = useState(''); 
+  const [jsonViewMode, setJsonViewModeState] = useState<JsonViewMode>(() => {
+    try { return localStorage.getItem(JSON_VIEW_MODE_STORAGE_KEY) === 'code' ? 'code' : 'preview'; } catch { return 'preview'; }
+  });
+  const setJsonViewMode = (mode: JsonViewMode) => {
+    setJsonViewModeState(mode);
+    try { localStorage.setItem(JSON_VIEW_MODE_STORAGE_KEY, mode); } catch { /* storage unavailable */ }
+  };
 
   React.useLayoutEffect(() => {
     setFinalSyntaxTheme(getSyntaxHighlighterTheme(currentThemeName));
@@ -266,13 +293,13 @@ const TabContentInner: React.FC<TabContentPropsType> = ({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
             <h2 className="text-xl md:text-2xl font-semibold text-[var(--text-accent)] mb-2 sm:mb-0">// projects.json</h2>
           </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 md:mb-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4 md:mb-6">
               <input
                 type="text"
                 value={aiProjectKeywords}
                 onChange={(e) => setAiProjectKeywords(e.target.value)}
                 placeholder="Keywords for AI (optional, e.g., game, health)"
-                className="flex-grow p-1.5 bg-[var(--modal-input-background)] text-[var(--modal-foreground)] border border-[var(--modal-input-border)] rounded-md focus:outline-none focus:border-[var(--focus-border)] focus:ring-1 focus:ring-[var(--focus-border)] text-xs placeholder-[var(--text-muted)] min-w-[200px]"
+                className="flex-grow p-1.5 bg-[var(--modal-input-background)] text-[var(--modal-foreground)] border border-[var(--modal-input-border)] rounded-md focus:outline-none focus:border-[var(--focus-border)] focus:ring-1 focus:ring-[var(--focus-border)] text-xs placeholder-[var(--text-muted)] w-full sm:w-auto sm:min-w-[200px]"
                 aria-label="Keywords for AI project suggestion"
               />
               {SparklesIcon && (
@@ -303,6 +330,7 @@ const TabContentInner: React.FC<TabContentPropsType> = ({
                 projectTitle={project.id.startsWith('ai_project_') ? `✨ ${project.title} (AI)` : project.title}
                 imageUrls={project.imageUrls}
                 technologies={project.technologies} 
+                summary={projectsList.find(p => p.id === project.id)?.summary ?? project.description}
                 onClick={() => onOpenProjectTab(project.id, project.id.startsWith('ai_project_') ? `✨ ${project.title} (AI)` : project.title)}
               />
             ))}
@@ -345,10 +373,25 @@ const TabContentInner: React.FC<TabContentPropsType> = ({
           </div>
         );
     }
+    const isPreviewable = !!tab.fileName && PREVIEWABLE_JSON_FILES.has(tab.fileName);
+    if (isPreviewable && jsonViewMode === 'preview') {
+      try {
+        const parsedData = JSON.parse(codeContentString);
+        return (
+          <div onContextMenu={handleContextMenu} className="relative h-full w-full">
+            <JsonViewModeToggle mode={jsonViewMode} onChange={setJsonViewMode} />
+            <JsonPreviewView jsonData={parsedData} fileId={tab.fileName!} portfolioData={portfolioData} />
+          </div>
+        );
+      } catch {
+        // Fall through to the raw code view if the content isn't valid JSON.
+      }
+    }
     // Default to JSON syntax highlighting for other .json files or code string
     const displayContent = getSyntaxHighlighterContent(codeContentString, 'json');
     return (
-      <div onContextMenu={handleContextMenu} className="h-full w-full">
+      <div onContextMenu={handleContextMenu} className="relative h-full w-full [&_code]:!whitespace-pre-wrap [&_code]:break-words [&_code>span]:!block [&_code>span]:pl-[4.25em] [&_code>span]:-indent-[4.25em]">
+        {isPreviewable && <JsonViewModeToggle mode={jsonViewMode} onChange={setJsonViewMode} />}
         <SyntaxHighlighter
           language="json" // Default to json for other files, or determine language if possible
           style={finalSyntaxTheme}

@@ -29,6 +29,7 @@ import { useDevToArticles } from '../Hooks/useDevToArticles';
 import { useFullscreen } from '../Hooks/useFullscreen';
 import { useGeminiChat } from '../Hooks/useGeminiChat';
 import { useGlobalEventHandlers } from '../Hooks/useGlobalEventHandlers';
+import { isMobileViewport, useIsMobile } from '../Hooks/useIsMobile';
 import { useNotifications } from '../Hooks/useNotifications';
 import { useThemeManager } from '../Hooks/useThemeManager';
 import { fetchAIProjectSuggestion } from '../Utils/aiUtils';
@@ -48,6 +49,9 @@ const ArticlesPanel = lazy(() => import('../features/articles/articlesPanel'));
 const PetsPanel = lazy(() => import('../features/Pets/PetsPanel'));
 const StatisticsPanel = lazy(() => import('../features/Statistics/StatisticsPanel'));
 const SourceControlPanel = lazy(() => import('../features/SourceControl/SourceControlPanel'));
+
+// Deep link (e.g. #/projects.json) the page was opened with.
+const INITIAL_URL_HASH = window.location.hash.replace(/^#\/?/, '');
 
 const DEFAULT_LEFT_PANEL_WIDTH = 256;
 const MIN_LEFT_PANEL_WIDTH = 150;
@@ -83,7 +87,6 @@ const App: React.FC = () => {
   const [userGitHubUsername, setUserGitHubUsername] = useState<string | null>(() => localStorage.getItem('portfolio-guestbook-github-username'));
 
   const initialEffectHasRun = useRef(false); 
-  const initialLoadNotificationIdRef = useRef<string | null>(null); 
 
   // Feature Status State
   const [featuresStatus, setFeaturesStatus] = useState<FeaturesStatusState>(DEFAULT_FEATURE_STATUSES);
@@ -296,11 +299,13 @@ const App: React.FC = () => {
     return saved ? parseInt(saved, 10) : DEFAULT_EDITOR_SPLIT_PERCENTAGE;
   });
 
-  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(() => localStorage.getItem('portfolio-isSidebarVisible') === 'true' || false);
-  const [isSearchPanelVisible, setIsSearchPanelVisible] = useState<boolean>(() => localStorage.getItem('portfolio-isSearchPanelVisible') === 'true' || false);
-  const [isArticlesPanelVisible, setIsArticlesPanelVisible] = useState<boolean>(() => localStorage.getItem('portfolio-isArticlesPanelVisible') === 'true' || false);
-  const [isStatisticsPanelVisible, setIsStatisticsPanelVisible] = useState<boolean>(() => localStorage.getItem('portfolio-isStatisticsPanelVisible') === 'true' || false);
-  const [isSourceControlVisible, setIsSourceControlVisible] = useState<boolean>(() => localStorage.getItem('portfolio-isSourceControlVisible') === 'true' || false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(() => !isMobileViewport() && localStorage.getItem('portfolio-isSidebarVisible') === 'true');
+  const [isSearchPanelVisible, setIsSearchPanelVisible] = useState<boolean>(() => !isMobileViewport() && localStorage.getItem('portfolio-isSearchPanelVisible') === 'true');
+  const [isArticlesPanelVisible, setIsArticlesPanelVisible] = useState<boolean>(() => !isMobileViewport() && localStorage.getItem('portfolio-isArticlesPanelVisible') === 'true');
+  const [isStatisticsPanelVisible, setIsStatisticsPanelVisible] = useState<boolean>(() => !isMobileViewport() && localStorage.getItem('portfolio-isStatisticsPanelVisible') === 'true');
+  const [isSourceControlVisible, setIsSourceControlVisible] = useState<boolean>(() => !isMobileViewport() && localStorage.getItem('portfolio-isSourceControlVisible') === 'true');
+  const isMobile = useIsMobile();
+  const isLeftPanelOpen = isSidebarVisible || isSearchPanelVisible || isArticlesPanelVisible || isStatisticsPanelVisible || isSourceControlVisible;
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(() => { const saved = localStorage.getItem('portfolio-leftPanelWidth'); return saved ? parseInt(saved, 10) : DEFAULT_LEFT_PANEL_WIDTH; });
   const [bottomPanelHeight, setBottomPanelHeight] = useState<number>(() => { const saved = localStorage.getItem('portfolio-bottomPanelHeight'); return saved ? parseInt(saved, 10) : DEFAULT_BOTTOM_PANEL_HEIGHT; });
   const [globalSearchTerm, setGlobalSearchTerm] = useState<string>('');
@@ -513,6 +518,24 @@ const App: React.FC = () => {
 
   const currentActiveTabForFocusedPane = useMemo(() => editorPanes[focusedEditorPaneId].openTabs.find(tab => tab.id === editorPanes[focusedEditorPaneId].activeTabId), [editorPanes, focusedEditorPaneId]);
 
+  const closeLeftPanels = useCallback(() => {
+    setIsSidebarVisible(false);
+    setIsSearchPanelVisible(false);
+    setIsArticlesPanelVisible(false);
+    setIsStatisticsPanelVisible(false);
+    setIsSourceControlVisible(false);
+    setActivityBarSelection(null);
+  }, []);
+
+  // On mobile the left panel is an overlay drawer: close it once the user opens something from it.
+  const focusedActiveTabId = editorPanes[focusedEditorPaneId].activeTabId;
+  const previousActiveTabIdRef = useRef(focusedActiveTabId);
+  useEffect(() => {
+    if (previousActiveTabIdRef.current === focusedActiveTabId) return;
+    previousActiveTabIdRef.current = focusedActiveTabId;
+    if (isMobile && focusedActiveTabId) closeLeftPanels();
+  }, [focusedActiveTabId, isMobile, closeLeftPanels]);
+
   useEffect(() => {
     document.title = currentActiveTabForFocusedPane ? `${currentActiveTabForFocusedPane.title} - ${PORTFOLIO_DATA.name} | PORTO CODE` : `PORTO CODE - ${PORTFOLIO_DATA.name}`;
   }, [currentActiveTabForFocusedPane, PORTFOLIO_DATA.name]);
@@ -547,35 +570,10 @@ const App: React.FC = () => {
       addAppLog('info', 'Application one-time initialization started.', 'SystemInit', { version: APP_VERSION });
       appendToTerminalOutput("Initializing PORTO CODE environment...");
 
-      if (!initialLoadNotificationIdRef.current) {
-        initialLoadNotificationIdRef.current = `initial-load-${crypto.randomUUID()}`;
-      }
-      const currentInitialNotifId = initialLoadNotificationIdRef.current;
-
-      rawAddNotification(
-        "Fetching profile data...",
-        'info',
-        0, 
-        undefined,
-        ICONS.Info,
-        true, 
-        currentInitialNotifId
-      );
-      addAppLog('info', `Notification Pushed: Fetching profile data... (ID: ${currentInitialNotifId})`, 'SystemUI');
-
+      // Startup feedback goes to the terminal and logs only; a toast on every visit is noise.
       setTimeout(() => {
-        if (currentInitialNotifId) {
-          rawRemoveNotification(currentInitialNotifId);
-        }
-        rawAddNotification(
-          "Profile data loaded successfully!",
-          'success',
-          3000, 
-          undefined,
-          ICONS.CheckCircle2 
-        );
-        addAppLog('info', 'Notification Pushed: Profile data loaded successfully!', 'SystemUI');
-        
+        addAppLog('info', 'Profile data loaded.', 'SystemInit');
+
         setIsInitialProfileLoading(false); 
         
         appendToTerminalOutput(`🐾 New session started. Virtual companion 'CodeCat_${randomUserId}' assigned.`);
@@ -1425,8 +1423,9 @@ const App: React.FC = () => {
 
     window.addEventListener('hashchange', handleHashChange);
 
-    // Process initial URL hash only once on first mount
-    const initialHash = window.location.hash.replace(/^#\/?/, '');
+    // Process initial URL hash only once on first mount. Read the value captured at module
+    // load: the hash-sync effect below clears the URL before a StrictMode re-mount runs this.
+    const initialHash = INITIAL_URL_HASH;
     const initTimer = initialHash
       ? setTimeout(() => applyHashRef.current(initialHash), 500)
       : undefined;
@@ -1976,6 +1975,7 @@ const App: React.FC = () => {
                 onOpenAIChat={handleOpenAIChatTab} 
                 onFocusTerminal={handleFocusTerminal}
                 onOpenGuestBook={handleOpenGuestBookTab}
+                onDownloadCV={handleRunCVGenerator}
             />
           )}
         </div>
@@ -2016,16 +2016,21 @@ const App: React.FC = () => {
         featuresStatus={featuresStatus}
         addNotificationAndLog={addNotificationAndLog}
       />
-      <main className="flex-1 flex overflow-hidden">
-        <ActivityBar
-          items={activityBarItems}
-          onReorder={handleReorderActivityBarItems}
-          activeViewId={activityBarSelection}
-          onOpenSettingsEditor={handleOpenSettingsEditor}
-        />
-        {(isSidebarVisible || isSearchPanelVisible || isArticlesPanelVisible || isStatisticsPanelVisible || isSourceControlVisible) && ( 
-          <div ref={leftPanelContainerRef} className="flex"> 
-            <div className="flex-shrink-0 overflow-hidden" style={{ width: `${leftPanelWidth}px` }}>
+      <main className="relative flex-1 flex overflow-hidden">
+        {!isMobile && (
+          <ActivityBar
+            items={activityBarItems}
+            onReorder={handleReorderActivityBarItems}
+            activeViewId={activityBarSelection}
+            onOpenSettingsEditor={handleOpenSettingsEditor}
+          />
+        )}
+        {isLeftPanelOpen && isMobile && (
+          <div className="absolute inset-0 z-30 bg-black/50" onClick={closeLeftPanels} aria-hidden="true" />
+        )}
+        {isLeftPanelOpen && ( 
+          <div ref={leftPanelContainerRef} className={isMobile ? 'absolute inset-y-0 left-0 z-40 flex shadow-2xl' : 'flex'}> 
+            <div className="flex-shrink-0 overflow-hidden h-full bg-[var(--sidebar-background)]" style={{ width: isMobile ? 'min(85vw, 320px)' : `${leftPanelWidth}px` }}>
               {isSidebarVisible && featuresStatus.explorer === 'active' && <Sidebar items={orderedSidebarItems} onOpenTab={(item) => handleOpenTab(item, false, focusedEditorPaneId)} onRunAction={handleSidebarAction} isVisible={isSidebarVisible} activeTabId={editorPanes[focusedEditorPaneId].activeTabId} onReorderItems={handleReorderSidebarItems} onContextMenuRequest={handleSidebarItemContextMenuRequest} />}
               {isSidebarVisible && featuresStatus.explorer !== 'active' && <MaintenanceView featureName={ALL_FEATURE_IDS.explorer} featureIcon={ICONS.files_icon}/>}
 
@@ -2050,15 +2055,15 @@ const App: React.FC = () => {
               {isSourceControlVisible && <SourceControlPanel isVisible={isSourceControlVisible} onClose={() => { setIsSourceControlVisible(false); if(activityBarSelection === 'source_control') setActivityBarSelection(null); }} featureStatus={featuresStatus.sourceControl} />}
               </Suspense>
             </div>
-            <div ref={leftResizerRef} onMouseDown={handleLeftPanelResizeStart} onTouchStart={handleLeftPanelResizeStart} className="resizer resizer-x"></div>
+            {!isMobile && <div ref={leftResizerRef} onMouseDown={handleLeftPanelResizeStart} onTouchStart={handleLeftPanelResizeStart} className="resizer resizer-x"></div>}
           </div>
         )}
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex overflow-hidden">
-            <div className="flex-1 overflow-hidden" style={{ width: isRightEditorPaneVisible ? `${editorSplitPercentage}%` : '100%' }}>
+            <div className="flex-1 overflow-hidden" style={{ width: isRightEditorPaneVisible && !isMobile ? `${editorSplitPercentage}%` : '100%' }}>
               {renderEditorPane('left')}
             </div>
-            {isRightEditorPaneVisible && (
+            {isRightEditorPaneVisible && !isMobile && (
               <>
                 <div ref={editorResizerRef} onMouseDown={handleEditorResizeStart} onTouchStart={handleEditorResizeStart} className="editor-resizer-x"></div>
                 <div className="flex-1 overflow-hidden" style={{ width: `${100 - editorSplitPercentage}%` }}>
@@ -2098,6 +2103,15 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
+      {isMobile && (
+        <ActivityBar
+          items={activityBarItems}
+          onReorder={handleReorderActivityBarItems}
+          activeViewId={activityBarSelection}
+          onOpenSettingsEditor={handleOpenSettingsEditor}
+          orientation="horizontal"
+        />
+      )}
       <StatusBar 
         version={APP_VERSION} 
         currentThemeName={currentThemeName} 

@@ -4,6 +4,13 @@ import { PortfolioData, CertificationEntry, SidebarItemConfig, ProjectDetail, Co
 import { User, Briefcase, Code2, FolderKanban, Mail, FileJson2, LucideIcon, FileTerminal, HelpCircle, Eye, Palette, Type as FontIcon, Settings, GitFork, Bell, TerminalSquare, ArrowLeft, ArrowRight, SplitSquareHorizontal, LayoutGrid, UserCircle2 as UserProfileIcon, Minus, Square, X, ChevronDown, ChevronRight, Search, Check, Files, FileCode, Bot, FileText, Link, Phone, MousePointerClick, Command, Newspaper, Play, Cat, Volume2, VolumeX, Sparkles, BarChart3, Folder as FolderClosed, FolderOpen, FileCode2 as FileCodeIcon, FileBadge, ExternalLink as ExternalLinkIcon, Image as ImageIcon, ListChecks, Github, MessageSquare, Loader2, Send, Heart, Info, CheckCircle2, AlertTriangle, RotateCcw, MessageSquarePlus, PawPrint, Waves, Bird, HardHat, ListFilter, LayoutPanelTop, GitBranch, Puzzle, Trophy } from 'lucide-react'; // Changed LayoutPanelBottom to LayoutPanelTop
 import { MOCK_CV_GENERATOR_CODE } from '../Assets/generate_cv_code';
 
+// First sentence of a project description, used as the one-liner on project cards.
+const getProjectSummary = (description: string): string => {
+  const text = description.replace(/\s+/g, ' ').trim();
+  const firstSentence = text.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? text;
+  return firstSentence.length > 160 ? `${firstSentence.slice(0, 157).trimEnd()}…` : firstSentence;
+};
+
 export const STATISTICS_FIREBASE_PATH = 'app_statistics'; // Base path for statistics in Firebase
 
 export const PORTFOLIO_DATA: PortfolioData = {
@@ -407,6 +414,7 @@ export function generateFileContent(fileName: string, data: PortfolioData): stri
         title: p.title,
         imageUrls: p.imageUrls,
         technologies: p.technologies ? p.technologies.slice(0, 3) : [], 
+        summary: getProjectSummary(p.description),
       }));
       content = {
         projects: projectListItems,

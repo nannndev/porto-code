@@ -309,6 +309,7 @@ export interface ProjectListingItem {
   title: string;
   imageUrls?: string[];
   technologies?: string[]; // Added to display key tech on cards
+  summary?: string; // Short one-liner shown on project cards
 }
 
 // Editor Pane Types for Split View

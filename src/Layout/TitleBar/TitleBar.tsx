@@ -5,7 +5,7 @@ import { AppMenuItem, SidebarItemConfig, Tab, ProjectDetail, EditorPaneId, Featu
 import { playSound } from '../../Utils/audioUtils';
 import MenuBar from '../../UI/MenuBar/MenuBar';
 import { generateMenuConfig } from './titleBarMenu';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, Menu } from 'lucide-react';
 
 
 export interface TitleBarProps { // Made exportable for potential use elsewhere, though not strictly necessary for this fix
@@ -169,13 +169,24 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
     <div className={`bg-[var(--titlebar-background)] text-[var(--titlebar-foreground)] px-1 sm:px-2 py-1.5 border-b border-[var(--titlebar-border)] flex items-center justify-between text-xs h-[36px] flex-shrink-0 ${className || ''}`}>
       <div className="flex items-center space-x-0.5 sm:space-x-1" ref={menuRef}>
         <ICONS.file_code_icon size={20} className="text-[var(--titlebar-icon-blue)] ml-1" />
-        <MenuBar menuItems={menuConfig} activeMenu={activeMenu} toggleMenu={toggleMenu} renderSubItems={renderSubItems} />
+        {/* On mobile the full menu bar doesn't fit; the Command Palette exposes the same actions. */}
+        <button
+            title="Menu"
+            onClick={() => { playSound('ui-click'); onOpenCommandPalette(); }}
+            className="md:hidden p-1.5 rounded hover:bg-[var(--titlebar-button-hover-background)] focus:outline-none"
+            aria-label="Open menu"
+        >
+            <Menu size={18} />
+        </button>
+        <div className="hidden md:flex items-center">
+          <MenuBar menuItems={menuConfig} activeMenu={activeMenu} toggleMenu={toggleMenu} renderSubItems={renderSubItems} />
+        </div>
 
         <button
             title="Back"
             onClick={onNavigateBack}
             disabled={!canNavigateBack}
-            className="p-1 rounded hover:bg-[var(--titlebar-button-hover-background)] focus:outline-none transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+            className="hidden md:inline-flex p-1 rounded hover:bg-[var(--titlebar-button-hover-background)] focus:outline-none transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Go back in tab history"
         >
             <ICONS.arrow_left_icon size={18} className="text-[var(--titlebar-icon-blue)]" />
@@ -184,7 +195,7 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
             title="Forward"
             onClick={onNavigateForward}
             disabled={!canNavigateForward}
-            className="p-1 rounded hover:bg-[var(--titlebar-button-hover-background)] focus:outline-none transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+            className="hidden md:inline-flex p-1 rounded hover:bg-[var(--titlebar-button-hover-background)] focus:outline-none transition-colors duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Go forward in tab history"
         >
             <ICONS.arrow_right_icon size={18} className="text-[var(--titlebar-icon-blue)]" />
@@ -206,7 +217,7 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
       <div className="flex items-center space-x-0.5 sm:space-x-1.5">
         <button 
             title="Toggle Second Editor Group" 
-            className="md:inline-flex p-1 hover:bg-[var(--titlebar-button-hover-background)] rounded text-[var(--titlebar-foreground)] items-center justify-center" 
+            className="hidden md:inline-flex p-1 hover:bg-[var(--titlebar-button-hover-background)] rounded text-[var(--titlebar-foreground)] items-center justify-center" 
             onClick={onToggleRightEditorPane}
         >
           <ICONS.split_square_horizontal_icon size={16} />
@@ -223,32 +234,36 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
           <ICONS.user_profile_icon size={16} />
         </button>
 
-        <div className="h-4 w-px bg-[var(--menubar-separator-color)] mx-0.5 sm:mx-1"></div>
+        <div className="hidden md:block h-4 w-px bg-[var(--menubar-separator-color)] mx-0.5 sm:mx-1"></div>
 
-        <button
-          title="Minimize (Not Implemented)"
-          className="p-1 sm:p-1.5 hover:bg-[var(--titlebar-button-hover-background)] rounded text-[var(--titlebar-foreground)]"
-          aria-label="Minimize window (feature not implemented)"
-          onClick={() => playSound('ui-click')}
-        >
-          <ICONS.minus_icon size={16} />
-        </button>
-        <button
-          title={isFullscreen ? "Restore Down" : "Maximize"}
-          onClick={onToggleFullscreen}
-          className="p-1 sm:p-1.5 hover:bg-[var(--titlebar-button-hover-background)] rounded text-[var(--titlebar-foreground)]"
-          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        >
-          <ICONS.square_icon size={14} />
-        </button>
-        <button
-          title="Close (Not Implemented)"
-          className="p-1 sm:p-1.5 hover:bg-red-600 rounded text-[var(--titlebar-foreground)] hover:text-white"
-          aria-label="Close window (feature not implemented)"
-          onClick={() => playSound('ui-click')}
-        >
-          <ICONS.x_icon size={16} />
-        </button>
+        {/* Decorative window controls are desktop-only. */}
+        <div className="hidden md:flex items-center space-x-0.5 sm:space-x-1.5">
+
+          <button
+            title="Minimize (Not Implemented)"
+            className="p-1 sm:p-1.5 hover:bg-[var(--titlebar-button-hover-background)] rounded text-[var(--titlebar-foreground)]"
+            aria-label="Minimize window (feature not implemented)"
+            onClick={() => playSound('ui-click')}
+          >
+            <ICONS.minus_icon size={16} />
+          </button>
+          <button
+            title={isFullscreen ? "Restore Down" : "Maximize"}
+            onClick={onToggleFullscreen}
+            className="p-1 sm:p-1.5 hover:bg-[var(--titlebar-button-hover-background)] rounded text-[var(--titlebar-foreground)]"
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            <ICONS.square_icon size={14} />
+          </button>
+          <button
+            title="Close (Not Implemented)"
+            className="p-1 sm:p-1.5 hover:bg-red-600 rounded text-[var(--titlebar-foreground)] hover:text-white"
+            aria-label="Close window (feature not implemented)"
+            onClick={() => playSound('ui-click')}
+          >
+            <ICONS.x_icon size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -7,10 +7,11 @@ interface ProjectCardProps {
   projectTitle: string;
   imageUrls?: string[];
   technologies?: string[]; 
+  summary?: string;
   onClick: () => void;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ projectId, projectTitle, imageUrls, technologies, onClick }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({ projectId, projectTitle, imageUrls, technologies, summary, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const hasMultipleImages = imageUrls && imageUrls.length > 1;
@@ -93,8 +94,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectId, projectTitl
           </div>
         )}
         
-        <p className="text-xs text-[var(--text-muted)] mb-4 mt-auto flex-grow leading-relaxed">
-          Click to view comprehensive project details, architecture, and live links.
+        <p className="text-xs text-[var(--text-muted)] mb-4 mt-auto flex-grow leading-relaxed line-clamp-3">
+          {summary || 'Click to view project details, architecture, and live links.'}
         </p>
         <div className="flex items-center text-xs sm:text-sm font-bold text-[var(--link-foreground)] group-hover/card:text-[var(--link-hover-foreground)] transition-colors duration-200">
           <span>Open Details</span>
