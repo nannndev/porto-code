@@ -1,7 +1,7 @@
 
 import { PortfolioData, WorkExperienceEntry, ProjectDetail, LogLevel, AIValidationStatus, ChatMessage } from '../App/types';
 import { generateFileContent } from '../App/constants';
-import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
+import { callGemini, isGeminiAvailable } from './geminiClient';
 
 // Build the system context block once per session
 export const buildSystemContext = (portfolioData: PortfolioData): string => {
@@ -123,46 +123,11 @@ export const fetchAIProjectSuggestion = async (
     addAppLog: (level: LogLevel, message: string, source?: string, details?: Record<string, any>) => void,
     userKeywords?: string
   ): Promise<Omit<ProjectDetail, 'id'> | null> => {
-  if (!process.env.API_KEY) {
-    addAppLog('error', "API_KEY is not set. Cannot fetch AI project suggestion.", 'AIService');
-    return null;
-  }
-
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  let keywordInstruction = '';
-  if (userKeywords && userKeywords.trim() !== '') {
-    keywordInstruction = `The user has also provided these keywords/interests for the project idea: "${userKeywords}". Please try to incorporate these themes or topics naturally into your suggestion if possible, while still aligning with the developer's skills.`;
-  }
-
-  const prompt = `
-You are an expert project manager and creative software architect.
-Your task is to suggest a new and interesting software project idea.
-The project should be innovative yet feasible. 
-Consider these skills of the developer who might build this: ${developerSkills.join(', ')}.
-${keywordInstruction}
-Please generate the following details for the project:
-1.  **title**: A catchy and descriptive project title (string).
-2.  **description**: A concise (2-3 sentences) description of what the project does, its purpose, and key features (string).
-3.  **technologies**: An array of 3-5 core technologies or tools that would be suitable for building this project (array of strings).
-4.  **year**: A plausible year of completion (number, e.g., ${new Date().getFullYear() + 1}).
-5.  **related_skills**: An array of 2-4 skills relevant to developing this project, possibly drawing from or complementing the developer's existing skills (array of strings).
-
-Return the response as a single, valid JSON object with exactly these keys: "title", "description", "technologies", "year", "related_skills".
-Do not include any other text or explanation outside of the JSON object.
-`;
   addAppLog('debug', 'Requesting AI project suggestion.', 'AIService', { skills: developerSkills, userKeywords });
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash", 
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            temperature: 0.8, 
-        }
-    });
-    
-    let jsonStr = (response.text || "").trim();
+    const responseText = await callGemini({ task: 'suggest-project', skills: developerSkills, keywords: userKeywords });
+
+    let jsonStr = responseText.trim();
     const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
     const match = jsonStr.match(fenceRegex);
     if (match && match[2]) {
@@ -195,38 +160,17 @@ export const validateGuestBookMessageWithGemini = async (
   message: string,
   addAppLog: (level: LogLevel, message: string, source?: string, details?: Record<string, any>) => void
 ): Promise<AIValidationStatus> => {
-  if (!process.env.API_KEY) {
-    addAppLog('warning', "Gemini API Key not available. Skipping guest book message validation.", 'GuestBookValidation');
+  if (!(await isGeminiAvailable())) {
+    addAppLog('warning', "Gemini API is not configured on the server. Skipping guest book message validation.", 'GuestBookValidation');
     return 'validation_skipped';
   }
-
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const prompt = `
-    You are a content moderation assistant for a public guest book.
-    Your task is to determine if the following message is respectful, appropriate, and not spammy for a public guest book on a developer's portfolio website.
-    The message should be generally positive or constructive. Avoid hate speech, offensive language, personal attacks, excessive profanity, or clearly irrelevant spam.
-    Respond with ONLY ONE of the following keywords:
-    - "OK" if the message is appropriate.
-    - "FLAGGED" if the message is inappropriate, offensive, spam, or otherwise problematic.
-
-    Message to validate: "${message}"
-
-    Your response:
-  `;
 
   addAppLog('debug', "Sending guest book message to Gemini for validation.", 'GuestBookValidation', { messageLength: message.length });
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        temperature: 0.1,
-        topK: 1,
-      }
-    });
+    const responseText = await callGemini({ task: 'moderate', message });
 
-    const validationText = (response.text || "").trim().toUpperCase();
+    const validationText = responseText.trim().toUpperCase();
     addAppLog('info', `Gemini validation response: ${validationText}`, 'GuestBookValidation');
 
     if (validationText === 'OK') {

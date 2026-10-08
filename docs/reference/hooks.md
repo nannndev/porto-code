@@ -30,7 +30,7 @@ function useGeminiChat(
 
 ### Behavior
 
-- Reads `VITE_GEMINI_API_KEY` from the environment. If absent, `apiKeyAvailable` is `false` and the chat UI renders a disabled state.
+- Calls the `/api/gemini` server function (see `api/gemini.ts`), which holds `GEMINI_API_KEY` server-side. If the server reports the key is not configured, `apiKeyAvailable` is `false` and the chat UI renders a disabled state.
 - Injects `portfolioData` as system context so the AI answers questions about the portfolio owner.
 - Streams responses token-by-token and appends them to the last AI message in real-time.
 - On error, sets `error` state and adds an error log entry.

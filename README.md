@@ -20,9 +20,10 @@ Porto Code presents a developer's portfolio through a familiar IDE interface —
 ## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/naneps/porto-code.git
+git clone https://github.com/nannndev/porto-code.git
 cd porto-code
 bun install   # or npm install
+cp .env.example .env   # then fill in GEMINI_API_KEY
 bun run dev   # or npm run dev
 ```
 

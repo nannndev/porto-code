@@ -38,7 +38,8 @@ Create a `.env` file in the project root:
 
 ```env
 # Google Gemini AI — https://aistudio.google.com/
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+# Server-only (no VITE_ prefix): used by the /api/gemini function, never sent to the browser.
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # Firebase — https://console.firebase.google.com/
 VITE_FIREBASE_API_KEY=your_firebase_api_key
