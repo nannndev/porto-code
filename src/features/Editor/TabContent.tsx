@@ -1,6 +1,6 @@
 
 import { ExternalLink, Loader2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
@@ -11,15 +11,17 @@ import { AIChatInterfaceProps as AIChatInterfacePropsType, ArticleItem, Settings
 import MaintenanceView from '../../UI/MaintenanceView';
 import { ProjectCard } from '../../UI/ProjectCard/ProjectCard';
 import { getSyntaxHighlighterTheme } from '../../Utils/syntaxHighlighterUtils';
-import AIChatInterface from '../AIChat/AIChatInterface';
-import { GitHubProfileView } from '../GitHub/GitHubProfileView';
-import GuestBookView from '../GuestBook/GuestBookView';
-import SpotifyView from '../Spotify/SpotifyView';
-import SettingsEditor from '../Settings/SettingsEditor';
-import ArticleDetailView from '../articles/ArticleDetailView'; // Import the new component
-import SupportView from '../Modals/SupportView';
-import CVPreview from './CVPreview';
-import JsonPreviewView from './JsonPreviewView';
+
+// Heavy views are code-split and only downloaded when their tab is opened.
+const AIChatInterface = lazy(() => import('../AIChat/AIChatInterface'));
+const GitHubProfileView = lazy(() => import('../GitHub/GitHubProfileView').then(m => ({ default: m.GitHubProfileView })));
+const GuestBookView = lazy(() => import('../GuestBook/GuestBookView'));
+const SpotifyView = lazy(() => import('../Spotify/SpotifyView'));
+const SettingsEditor = lazy(() => import('../Settings/SettingsEditor'));
+const ArticleDetailView = lazy(() => import('../articles/ArticleDetailView'));
+const SupportView = lazy(() => import('../Modals/SupportView'));
+const CVPreview = lazy(() => import('./CVPreview'));
+const JsonPreviewView = lazy(() => import('./JsonPreviewView'));
 
 
 SyntaxHighlighter.registerLanguage('json', json);
@@ -30,7 +32,7 @@ SyntaxHighlighter.registerLanguage('typescript', typescript);
 // but for consistency, it's better to use the one from types.ts if they are identical.
 // For this fix, assuming `AIChatInterfacePropsType` from `types.ts` is the correct one.
 
-const TabContent: React.FC<TabContentPropsType> = ({
+const TabContentInner: React.FC<TabContentPropsType> = ({
   tab,
   content, 
   portfolioData,
@@ -370,5 +372,17 @@ const TabContent: React.FC<TabContentPropsType> = ({
     </div>
   );
 };
+
+const TabContentFallback: React.FC = () => (
+  <div className="flex items-center justify-center h-full w-full text-[var(--text-muted)]">
+    <Loader2 size={20} className="animate-spin" />
+  </div>
+);
+
+const TabContent: React.FC<TabContentPropsType> = (props) => (
+  <Suspense fallback={<TabContentFallback />}>
+    <TabContentInner {...props} />
+  </Suspense>
+);
 
 export default TabContent;

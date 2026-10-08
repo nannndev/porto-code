@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
 import { ArticleItem, LogLevel } from '../App/types';
-import crawledArticles from '../Assets/articles.json';
+
+// Crawled at build time by scripts/crawl-articles.ts and served as a static asset,
+// so the ~2 MB payload is only downloaded when the articles view is opened.
+const ARTICLES_URL = '/data/articles.json';
 
 export const useDevToArticles = (
   username: string, 
@@ -20,16 +23,19 @@ export const useDevToArticles = (
     }
 
     try {
-      // Simulate network request to keep the slick loading UX animation
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(ARTICLES_URL);
+      if (!response.ok) {
+        throw new Error(`Failed to load articles (HTTP ${response.status}).`);
+      }
+      const crawledArticles: ArticleItem[] = await response.json();
 
-      const sortedData = (crawledArticles as ArticleItem[]).sort((a, b) => 
+      const sortedData = crawledArticles.sort((a, b) => 
         new Date(b.published_timestamp).getTime() - new Date(a.published_timestamp).getTime()
       );
 
       setArticles(sortedData);
       if (typeof log === 'function') {
-        log('info', `Successfully loaded ${sortedData.length} crawled articles statically.`, 'CrawledArticlesHook');
+        log('info', `Successfully loaded ${sortedData.length} crawled articles.`, 'CrawledArticlesHook');
       }
       setIsLoading(false);
       return true;

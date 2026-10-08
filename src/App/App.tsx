@@ -1,8 +1,6 @@
 
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import FeatureStatusAdminPanel from '../features/Admin/FeatureStatusAdminPanel'; // Added import
-import ArticlesPanel from '../features/articles/articlesPanel';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CommandPalette from '../features/Commands/CommandPalette';
 import TabContent from '../features/Editor/TabContent';
 import WelcomeView from '../features/Editor/WelcomeView';
@@ -11,12 +9,8 @@ import AboutModal from '../features/Modals/AboutModal';
 import PasskeyPromptModal from '../features/Modals/PasskeyPromptModal';
 import ProfilePopup from '../features/Modals/ProfilePopup';
 import NotificationContainer from '../features/Notifications/NotificationContainer';
-import PetsPanel from '../features/Pets/PetsPanel';
 import SearchPanel from '../features/Search/SearchPanel';
-import StatisticsPanel from '../features/Statistics/StatisticsPanel';
 import TerminalPanel from '../features/Terminal/TerminalPanel';
-import SourceControlPanel from '../features/SourceControl/SourceControlPanel';
-import SupportView from '../features/Modals/SupportView';
 import ActivityBar from '../Layout/ActivityBar/ActivityBar';
 import BottomPanelTabs from '../Layout/BottomPanelTabs/BottomPanelTabs';
 import Breadcrumbs from '../Layout/Breadcrumbs/Breadcrumbs';
@@ -40,15 +34,20 @@ import { useThemeManager } from '../Hooks/useThemeManager';
 import { fetchAIProjectSuggestion } from '../Utils/aiUtils';
 import { getMuteStatus, playSound, toggleMute } from '../Utils/audioUtils';
 import { generateCommands } from '../Utils/commandUtils';
-import { createCV_PDF } from '../Utils/cvGenerator';
 import { auth, database, set as firebaseSet, FirebaseUser, onAuthStateChanged, onValue, ref } from '../Utils/firebase'; // Added firebaseSet
 import { fetchStatistics, incrementStatistic } from '../Utils/statisticsUtils'; // Added statistics utils
 import { processCommand } from '../Utils/terminalCommands';
-import SpotifyView from '../features/Spotify/SpotifyView';
 import NowPlayingWidget from '../features/Spotify/NowPlayingWidget';
 import { handleSpotifyCallback, isSpotifyAuthenticated } from '../Utils/spotifyUtils';
 
 
+
+// Panels that are hidden on first load are code-split.
+const FeatureStatusAdminPanel = lazy(() => import('../features/Admin/FeatureStatusAdminPanel'));
+const ArticlesPanel = lazy(() => import('../features/articles/articlesPanel'));
+const PetsPanel = lazy(() => import('../features/Pets/PetsPanel'));
+const StatisticsPanel = lazy(() => import('../features/Statistics/StatisticsPanel'));
+const SourceControlPanel = lazy(() => import('../features/SourceControl/SourceControlPanel'));
 
 const DEFAULT_LEFT_PANEL_WIDTH = 256;
 const MIN_LEFT_PANEL_WIDTH = 150;
@@ -698,7 +697,7 @@ const App: React.FC = () => {
       addAppLog('warning', 'CV Generator action blocked due to maintenance mode.', 'System', { featureId: 'cvGenerator' });
       return;
     }
-    addAppLog('action', 'CV generation process started.', 'User'); setIsGeneratingCV(true); const cvSteps = [ "Starting CV generation...", "Fetching portfolio data...", "Initializing PDF document with pdf-lib...", "Formatting header and contact information...", "Adding summary section...", "Processing work experience entries...", "Detailing education background...", "Listing key skills...", "Compiling PDF structure...", "Finalizing PDF document...", ]; simulateTerminalRun("generate_cv.ts", 5000, cvSteps); let pdfBytes: Uint8Array | null = null; try { pdfBytes = await createCV_PDF(PORTFOLIO_DATA); appendToTerminalOutput("PDF bytes generated successfully."); } catch (error) { console.error("Error generating CV PDF:", error); appendToTerminalOutput(`Error during PDF generation: ${error instanceof Error ? error.message : String(error)}`); addNotificationAndLog("Failed to generate CV PDF.", 'error', 7000, undefined, ICONS.FileText); addAppLog('error', 'CV PDF generation failed.', 'System', { error }); playSound('error'); setIsGeneratingCV(false); return; } setTimeout(() => { setIsGeneratingCV(false); const cvTabId = 'cv_nandang_eka_prasetya.pdf'; const cvTabTitle = 'Nandang_Eka_Prasetya_CV.pdf'; if (pdfBytes) { const blob = new Blob([pdfBytes], { type: 'application/pdf' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = cvTabTitle; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(link.href); appendToTerminalOutput(`${cvTabTitle} download initiated.`); addNotificationAndLog( `CV downloaded: ${cvTabTitle}`, 'success', 7000, [{ label: 'Open Preview', onClick: () => handleOpenTab({ id: cvTabId, title: cvTabTitle, type: 'cv_preview' }) }], ICONS.cv_preview_icon ); addAppLog('info', `CV downloaded: ${cvTabTitle}.`, 'System'); incrementStatistic('action_counts/cv_downloads'); } else { addNotificationAndLog("CV PDF generation failed. Preview unavailable.", 'error', 7000, undefined, ICONS.FileText); addAppLog('error', 'CV PDF generation failed, preview unavailable.', 'System'); } handleOpenTab({ id: cvTabId, title: cvTabTitle, type: 'cv_preview', fileName: cvTabId, }, false, focusedEditorPaneId); playSound('notification'); }, 5100); }, [simulateTerminalRun, handleOpenTab, addNotificationAndLog, appendToTerminalOutput, focusedEditorPaneId, addAppLog, featuresStatus]);
+    addAppLog('action', 'CV generation process started.', 'User'); setIsGeneratingCV(true); const cvSteps = [ "Starting CV generation...", "Fetching portfolio data...", "Initializing PDF document with pdf-lib...", "Formatting header and contact information...", "Adding summary section...", "Processing work experience entries...", "Detailing education background...", "Listing key skills...", "Compiling PDF structure...", "Finalizing PDF document...", ]; simulateTerminalRun("generate_cv.ts", 5000, cvSteps); let pdfBytes: Uint8Array | null = null; try { const { createCV_PDF } = await import('../Utils/cvGenerator'); pdfBytes = await createCV_PDF(PORTFOLIO_DATA); appendToTerminalOutput("PDF bytes generated successfully."); } catch (error) { console.error("Error generating CV PDF:", error); appendToTerminalOutput(`Error during PDF generation: ${error instanceof Error ? error.message : String(error)}`); addNotificationAndLog("Failed to generate CV PDF.", 'error', 7000, undefined, ICONS.FileText); addAppLog('error', 'CV PDF generation failed.', 'System', { error }); playSound('error'); setIsGeneratingCV(false); return; } setTimeout(() => { setIsGeneratingCV(false); const cvTabId = 'cv_nandang_eka_prasetya.pdf'; const cvTabTitle = 'Nandang_Eka_Prasetya_CV.pdf'; if (pdfBytes) { const blob = new Blob([pdfBytes], { type: 'application/pdf' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = cvTabTitle; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(link.href); appendToTerminalOutput(`${cvTabTitle} download initiated.`); addNotificationAndLog( `CV downloaded: ${cvTabTitle}`, 'success', 7000, [{ label: 'Open Preview', onClick: () => handleOpenTab({ id: cvTabId, title: cvTabTitle, type: 'cv_preview' }) }], ICONS.cv_preview_icon ); addAppLog('info', `CV downloaded: ${cvTabTitle}.`, 'System'); incrementStatistic('action_counts/cv_downloads'); } else { addNotificationAndLog("CV PDF generation failed. Preview unavailable.", 'error', 7000, undefined, ICONS.FileText); addAppLog('error', 'CV PDF generation failed, preview unavailable.', 'System'); } handleOpenTab({ id: cvTabId, title: cvTabTitle, type: 'cv_preview', fileName: cvTabId, }, false, focusedEditorPaneId); playSound('notification'); }, 5100); }, [simulateTerminalRun, handleOpenTab, addNotificationAndLog, appendToTerminalOutput, focusedEditorPaneId, addAppLog, featuresStatus]);
   const handleSidebarAction = useCallback((actionType: SidebarItemConfig['actionType'], item: SidebarItemConfig) => {
     if (item.featureId && featuresStatus[item.featureId] !== 'active') {
       addNotificationAndLog(`The ${ALL_FEATURE_IDS[item.featureId]} feature is currently under maintenance.`, 'warning', 5000, undefined, ICONS.HardHatIcon);
@@ -2032,6 +2031,7 @@ const App: React.FC = () => {
 
               {isSearchPanelVisible && <SearchPanel isVisible={isSearchPanelVisible} searchTerm={globalSearchTerm} onSearchTermChange={setGlobalSearchTerm} results={searchResults} onResultClick={(result) => { handleOpenTab({ id: result.fileId, fileName: result.fileId, type: result.tabType, title: result.fileDisplayPath }, false, focusedEditorPaneId); playSound('ui-click');}} onClose={() => { setIsSearchPanelVisible(false); if(activityBarSelection === 'search') setActivityBarSelection(null); }} featureStatus={featuresStatus.searchPanel}/>}
               
+              <Suspense fallback={null}>
               {isArticlesPanelVisible && (
                 <ArticlesPanel 
                     isVisible={isArticlesPanelVisible} 
@@ -2048,6 +2048,7 @@ const App: React.FC = () => {
               {isStatisticsPanelVisible && <StatisticsPanel isVisible={isStatisticsPanelVisible} statisticsData={statisticsData} isLoading={isLoadingStatistics} error={statisticsError} onClose={() => {setIsStatisticsPanelVisible(false); if(activityBarSelection === 'statistics') setActivityBarSelection(null);}} featureStatus={featuresStatus.statisticsPanel}/>}
 
               {isSourceControlVisible && <SourceControlPanel isVisible={isSourceControlVisible} onClose={() => { setIsSourceControlVisible(false); if(activityBarSelection === 'source_control') setActivityBarSelection(null); }} featureStatus={featuresStatus.sourceControl} />}
+              </Suspense>
             </div>
             <div ref={leftResizerRef} onMouseDown={handleLeftPanelResizeStart} onTouchStart={handleLeftPanelResizeStart} className="resizer resizer-x"></div>
           </div>
@@ -2090,7 +2091,7 @@ const App: React.FC = () => {
                     featureStatus={featuresStatus.terminal}
                   />
                 )}
-                {activeBottomPanelId === 'pets' && <PetsPanel onClose={handleCloseBottomPanel} featureStatus={featuresStatus.petsPanel} />}
+                {activeBottomPanelId === 'pets' && <Suspense fallback={null}><PetsPanel onClose={handleCloseBottomPanel} featureStatus={featuresStatus.petsPanel} /></Suspense>}
                 {activeBottomPanelId === 'logs' && <LogsPanel logs={logs} onClose={handleCloseBottomPanel} featureStatus={featuresStatus.logsPanel}/>}
               </div>
             </>
@@ -2121,6 +2122,7 @@ const App: React.FC = () => {
         />
       )}
       {isDevModeEnabled && (
+        <Suspense fallback={null}>
         <FeatureStatusAdminPanel
           isOpen={isFeatureStatusAdminPanelOpen}
           onClose={toggleFeatureStatusAdminPanel}
@@ -2128,6 +2130,7 @@ const App: React.FC = () => {
           onSaveChangesToFirebase={handleSaveFeatureStatusesToFirebase}
           allFeatureIds={ALL_FEATURE_IDS}
         />
+        </Suspense>
       )}
       <ContextMenu
         x={editorContextMenuState.x}

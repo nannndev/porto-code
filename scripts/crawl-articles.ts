@@ -434,7 +434,7 @@ async function run() {
   });
 
   // Ensure output directory exists
-  const outputDir = path.join(process.cwd(), 'src/Assets');
+  const outputDir = path.join(process.cwd(), 'public/data');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
