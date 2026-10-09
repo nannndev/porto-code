@@ -2,6 +2,7 @@
 import React from 'react';
 import { Tab, PortfolioData, SidebarItemConfig, EditorPaneId } from '../../App/types'; 
 import { ICONS } from '../../App/constants';
+import CopyLinkButton from '../../UI/CopyLinkButton';
 
 
 interface BreadcrumbsProps {
@@ -183,6 +184,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ activeTab, portfolioData, onO
             <span>{activeTab.title}</span>
         </div>
       )}
+      <CopyLinkButton tab={activeTab} className="ml-auto flex-shrink-0" />
     </div>
   );
 };

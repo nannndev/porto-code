@@ -39,6 +39,10 @@ export interface ProjectDetail {
   related_skills?: string[]; // New for AI suggestions
   webLink?: string;
   imageUrls?: string[];
+  // Optional case-study details shown on the project page when present.
+  role?: string; // e.g. "Mobile Developer at Yubi Technology"
+  contributions?: string[]; // What you personally built or owned
+  impact?: string[]; // Outcomes, ideally measurable
 }
 
 export interface PortfolioData {

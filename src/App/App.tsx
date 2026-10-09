@@ -9,6 +9,7 @@ import AboutModal from '../features/Modals/AboutModal';
 import PasskeyPromptModal from '../features/Modals/PasskeyPromptModal';
 import ProfilePopup from '../features/Modals/ProfilePopup';
 import NotificationContainer from '../features/Notifications/NotificationContainer';
+import OnboardingTour from '../features/Onboarding/OnboardingTour';
 import SearchPanel from '../features/Search/SearchPanel';
 import TerminalPanel from '../features/Terminal/TerminalPanel';
 import ActivityBar from '../Layout/ActivityBar/ActivityBar';
@@ -38,6 +39,7 @@ import { generateCommands } from '../Utils/commandUtils';
 import { auth, database, set as firebaseSet, FirebaseUser, onAuthStateChanged, onValue, ref } from '../Utils/firebase'; // Added firebaseSet
 import { fetchStatistics, incrementStatistic } from '../Utils/statisticsUtils'; // Added statistics utils
 import { processCommand } from '../Utils/terminalCommands';
+import { getTabHash } from '../Utils/tabHash';
 import NowPlayingWidget from '../features/Spotify/NowPlayingWidget';
 import { handleSpotifyCallback, isSpotifyAuthenticated } from '../Utils/spotifyUtils';
 
@@ -1443,27 +1445,7 @@ const App: React.FC = () => {
     let hash = '';
     
     if (currentTab) {
-      if (currentTab.type === 'file') {
-        hash = currentTab.id;
-      } else if (currentTab.type === 'article_detail') {
-        hash = `article_${currentTab.articleId}`;
-      } else if (currentTab.type === 'ai_chat') {
-        hash = 'ai_chat';
-      } else if (currentTab.type === 'github_profile_view') {
-        hash = 'github';
-      } else if (currentTab.type === 'guest_book') {
-        hash = 'guest_book';
-      } else if (currentTab.type === 'settings_editor') {
-        hash = 'settings';
-      } else if (currentTab.type === 'cv_preview') {
-        hash = 'cv_preview';
-      } else if (currentTab.type === 'spotify_view') {
-        hash = 'spotify';
-      } else if (currentTab.type === 'json_preview') {
-        hash = `${currentTab.id.replace('_preview', '')}_preview`;
-      } else if (currentTab.type === 'project_detail') {
-        hash = currentTab.id;
-      }
+      hash = getTabHash(currentTab);
     } else {
       if (isSearchPanelVisible) {
         hash = 'search';
@@ -2146,6 +2128,7 @@ const App: React.FC = () => {
         />
         </Suspense>
       )}
+      <OnboardingTour isMobile={isMobile} />
       <ContextMenu
         x={editorContextMenuState.x}
         y={editorContextMenuState.y}

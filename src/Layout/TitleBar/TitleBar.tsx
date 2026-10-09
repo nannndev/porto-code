@@ -201,7 +201,7 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
       </div>
 
       <div className="flex-1 flex justify-center items-center min-w-0 px-1 sm:px-2">
-        <div className="bg-[var(--menubar-background)] border border-[var(--menubar-separator-color)] rounded-md px-2 sm:px-3 py-1 flex items-center max-w-xs sm:max-w-md w-full">
+        <div data-tour="command-center" className="bg-[var(--menubar-background)] border border-[var(--menubar-separator-color)] rounded-md px-2 sm:px-3 py-1 flex items-center max-w-xs sm:max-w-md w-full">
           <ICONS.file_code_icon size={14} className="text-[var(--titlebar-icon-blue)] mr-1.5 sm:mr-2 flex-shrink-0" />
           <span className="truncate text-[var(--titlebar-foreground)] text-xs hidden sm:inline">
             PORTO <span className="text-[var(--text-accent)]">CODE</span> -- {PORTFOLIO_DATA.name}

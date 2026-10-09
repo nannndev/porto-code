@@ -112,6 +112,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       description: "YUBI POS is a Point of Sale (POS) application specifically designed for restaurants and cafes. It provides comprehensive features including order management, inventory, sales reporting, and payment integration. The system runs on Android and Desktop devices.",
       technologies: ["Flutter", "Dart", "Laravel", "Firebase"],
       related_skills: ["Flutter", "Dart", "Laravel", "Firebase"],
+      role: "Mobile Developer at Yubi Technology",
       imageUrls: ["https://github.com/naneps/cv-md/blob/main/assets/yubipos-convensional.png?raw=true"]
     },
     {
@@ -120,6 +121,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       description: "YUBI POS MART is a POS application tailored for the operational needs of minimarkets and retail stores. It offers features for stock management, sales tracking, cashier system integration, and detailed financial reports. The application supports Android and Desktop platforms.",
       technologies: ["Flutter", "Dart", "Laravel", "Firebase"],
       related_skills: ["Flutter", "Dart", "Laravel", "Firebase"],
+      role: "Mobile Developer at Yubi Technology",
       imageUrls: ["https://github.com/naneps/cv-md/blob/main/assets/yubipos-mart.png?raw=true"]
     },
     {
@@ -139,6 +141,9 @@ export const PORTFOLIO_DATA: PortfolioData = {
       description: "KIOS-K is a self-service application for ordering coffee and non-coffee beverages prepared by a robot barista. It allows customers to easily order their favorite drinks through an intuitive interface, integrating directly with the robot barista and digital payment systems.",
       technologies: ["Flutter", "Laravel", "Firebase"],
       related_skills: ["Flutter", "Laravel", "Firebase"],
+      role: "Mobile Developer at Yubi Technology",
+      contributions: ["Engineered the self-service kiosk app integrated with the robot barista hardware."],
+      impact: ["Processes 200+ real-time orders daily."],
       imageUrls: [
         "https://github.com/naneps/cv-md/blob/main/assets/kiosk1.png?raw=true",
         "https://github.com/naneps/cv-md/blob/main/assets/kiosk2.png?raw=true"

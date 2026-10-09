@@ -2,6 +2,8 @@
 import React from 'react';
 import { PortfolioData, EducationEntry, WorkExperienceEntry, Position, ProjectDetail } from '../../App/types';
 import { ICONS } from '../../App/constants';
+import ImageLightbox from '../../UI/ImageLightbox';
+import { CheckCircle2, MessageCircle, Send, TrendingUp, UserCircle2 } from 'lucide-react';
 
 interface JsonPreviewViewProps {
   jsonData: any;
@@ -9,7 +11,68 @@ interface JsonPreviewViewProps {
   portfolioData: PortfolioData;
 }
 
+// Converts a local Indonesian number (08xx…) to international form for display and WhatsApp.
+const toInternationalPhone = (phone: string): { display: string; digits: string } => {
+  let digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('0')) digits = `62${digits.slice(1)}`;
+  const local = digits.startsWith('62') ? digits.slice(2) : digits;
+  const grouped = local.replace(/^(\d{3})(\d{4})(\d+)$/, '$1-$2-$3');
+  return { display: digits.startsWith('62') ? `+62 ${grouped}` : `+${digits}`, digits };
+};
+
+const ContactComposer: React.FC<{ email?: string; whatsappDigits?: string }> = ({ email, whatsappDigits }) => {
+  const [name, setName] = React.useState('');
+  const [message, setMessage] = React.useState('');
+  const body = `Hi Nandang,\n\n${message.trim()}${name.trim() ? `\n\n— ${name.trim()}` : ''}`;
+  const canSend = message.trim().length > 0;
+  const subject = `Portfolio inquiry${name.trim() ? ` from ${name.trim()}` : ''}`;
+  const inputClass = 'w-full p-2 bg-[var(--modal-input-background)] text-[var(--modal-foreground)] border border-[var(--modal-input-border)] rounded-lg focus:outline-none focus:border-[var(--focus-border)] focus:ring-1 focus:ring-[var(--focus-border)] text-xs sm:text-sm placeholder-[var(--text-muted)]';
+  const buttonClass = 'inline-flex items-center justify-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg transition-colors duration-200';
+
+  return (
+    <div className="sm:col-span-2 p-5 rounded-xl border border-[var(--border-color)]/60 bg-[var(--sidebar-background)]/30 backdrop-blur-sm">
+      <div className="flex items-center text-[var(--text-accent)] mb-3">
+        <Send size={16} className="mr-2" />
+        <span className="text-xs font-bold uppercase tracking-wider">Send a Quick Message</span>
+      </div>
+      <div className="grid gap-2">
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name (optional)" aria-label="Your name" className={inputClass} />
+        <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Hi! I'd like to talk about…" aria-label="Message" rows={4} className={`${inputClass} resize-y`} />
+      </div>
+      <div className="flex flex-wrap gap-2 mt-3">
+        {email && (
+          <a
+            href={canSend ? `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}` : undefined}
+            aria-disabled={!canSend}
+            className={`${buttonClass} bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] hover:bg-[var(--modal-button-hover-background)] ${canSend ? '' : 'opacity-50 pointer-events-none'}`}
+          >
+            <MailIconInline /> Send via Email
+          </a>
+        )}
+        {whatsappDigits && (
+          <a
+            href={canSend ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(body)}` : undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={!canSend}
+            className={`${buttonClass} bg-emerald-600 text-white hover:bg-emerald-500 ${canSend ? '' : 'opacity-50 pointer-events-none'}`}
+          >
+            <MessageCircle size={14} /> Send via WhatsApp
+          </a>
+        )}
+      </div>
+      <p className="mt-2 text-[10px] text-[var(--text-muted)]">Opens your email app or WhatsApp with the message pre-filled.</p>
+    </div>
+  );
+};
+
+const MailIconInline: React.FC = () => {
+  const Icon = ICONS.Mail;
+  return Icon ? <Icon size={14} /> : null;
+};
+
 const JsonPreviewView: React.FC<JsonPreviewViewProps> = ({ jsonData, fileId, portfolioData }) => {
+  const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
   const MailIcon = ICONS.Mail;
   const PhoneIcon = ICONS.Phone || MailIcon;
   const BriefcaseIcon = ICONS.Briefcase;
@@ -23,7 +86,6 @@ const JsonPreviewView: React.FC<JsonPreviewViewProps> = ({ jsonData, fileId, por
   const InfoIcon = ICONS.about_portfolio || UserIcon;
   const ProjectIcon = ICONS.project_detail || BriefcaseIcon;
   const TechIcon = ICONS.Code2;
-  const CalendarIcon = ICONS.FileText;
   const SparklesIcon = ICONS.SparklesIcon;
   const ExternalLink = ICONS.ExternalLinkIcon; 
   const ImageIcon = ICONS.ImageIcon; 
@@ -119,53 +181,108 @@ const JsonPreviewView: React.FC<JsonPreviewViewProps> = ({ jsonData, fileId, por
   if (fileId.startsWith('project_') || fileId.startsWith('ai_project_')) {
     const project = jsonData as ProjectDetail;
     const isAISuggestion = fileId.startsWith('ai_project_');
+    const images = project.imageUrls || [];
+    const technologies = project.technologies || [];
+    // Only show related skills when they add something beyond the technology list.
+    const extraSkills = (project.related_skills || []).filter(skill => !technologies.includes(skill));
+
+    const renderBulletList = (items: string[], Icon: React.ElementType, iconClass: string) => (
+      <ul className="space-y-2 mb-4 ml-6 sm:ml-7">
+        {items.map((item, index) => (
+          <li key={index} className="flex items-start text-xs sm:text-sm text-[var(--text-default)] leading-relaxed">
+            <Icon size={15} className={`mr-2 mt-0.5 flex-shrink-0 ${iconClass}`} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    );
 
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[var(--editor-background)] text-[var(--editor-foreground)] h-full overflow-auto">
-        {renderSectionTitle(isAISuggestion ? project.title : `Project Preview: ${project.title}`, ProjectIcon, isAISuggestion)}
+        {renderSectionTitle(isAISuggestion ? project.title : `Project: ${project.title}`, ProjectIcon, isAISuggestion)}
         {isAISuggestion && <p className="text-[0.65rem] sm:text-xs text-yellow-500 mb-2 sm:mb-3 ml-6 sm:ml-7 -mt-1 sm:-mt-2">This project idea was suggested by AI.</p>}
 
-        {!isAISuggestion && renderDetailItem("ID", project.id)}
+        <div className="flex flex-wrap items-center gap-2 mb-4 ml-6 sm:ml-7">
+          {project.role && (
+            <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[var(--text-default)]">
+              <UserCircle2 size={15} className="text-[var(--text-accent)]" /> {project.role}
+            </span>
+          )}
+          {project.year && <span className="text-xs text-[var(--text-muted)]">· {project.year}</span>}
+          {project.webLink && ExternalLink && (
+            <a
+              href={project.webLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sm:ml-auto inline-flex items-center px-3 py-1.5 bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] hover:bg-[var(--modal-button-hover-background)] rounded-lg text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-border)] transition-colors shadow-sm"
+            >
+              <ExternalLink size={14} className="mr-1.5" />
+              Visit Website
+            </a>
+          )}
+        </div>
 
-        {renderSectionTitle("Description", InfoIcon)}
+        {technologies.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2 ml-6 sm:ml-7">
+            {technologies.map(tech => (
+              <span key={tech} className="text-[10px] sm:text-xs font-semibold bg-[var(--text-accent)]/10 text-[var(--text-accent)] px-2 py-0.5 rounded-full border border-[var(--text-accent)]/20">
+                {tech}
+              </span>
+            ))}
+          </div>
+        )}
+        {extraSkills.length > 0 && <div className="ml-6 sm:ml-7">{renderDetailItem("Related Skills", extraSkills, Code2Icon)}</div>}
+
+        {renderSectionTitle("Overview", InfoIcon)}
         <div className="text-xs sm:text-sm text-[var(--text-default)] mb-4 ml-6 sm:ml-7 whitespace-pre-line leading-relaxed">
           {renderFormattedDescription(project.description)}
         </div>
 
-        {renderDetailItem("Technologies", project.technologies, TechIcon)}
-        {project.year && renderDetailItem("Year", project.year.toString(), CalendarIcon)}
-        {project.related_skills && project.related_skills.length > 0 &&
-          renderDetailItem("Related Skills", project.related_skills, Code2Icon)}
+        {project.contributions && project.contributions.length > 0 && (
+          <>
+            {renderSectionTitle("Key Contributions", TechIcon)}
+            {renderBulletList(project.contributions, CheckCircle2, 'text-[var(--text-accent)]')}
+          </>
+        )}
 
-        {project.imageUrls && project.imageUrls.length > 0 && (
+        {project.impact && project.impact.length > 0 && (
+          <>
+            {renderSectionTitle("Impact", TrendingUp)}
+            {renderBulletList(project.impact, TrendingUp, 'text-emerald-400')}
+          </>
+        )}
+
+        {images.length > 0 && (
           <>
             {renderSectionTitle("Project Visuals", ImageIcon)}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ml-6 sm:ml-7 mb-4">
-              {project.imageUrls.map((url, index) => (
-                <img
+              {images.map((url, index) => (
+                <button
                   key={index}
-                  src={url}
-                  alt={`${project.title} - Visual ${index + 1}`}
-                  className="w-full h-auto object-contain rounded-xl border border-[var(--border-color)]/60 shadow-md max-h-60 hover:scale-[1.01] transition-transform duration-300"
-                  loading="lazy"
-                />
+                  onClick={() => setLightboxIndex(index)}
+                  className="group relative rounded-xl overflow-hidden border border-[var(--border-color)]/60 shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--focus-border)] cursor-zoom-in"
+                  aria-label={`View ${project.title} visual ${index + 1} full screen`}
+                >
+                  <img
+                    src={url}
+                    alt={`${project.title} - Visual ${index + 1}`}
+                    className="w-full h-auto object-contain max-h-60 group-hover:scale-[1.02] transition-transform duration-300"
+                    loading="lazy"
+                  />
+                </button>
               ))}
             </div>
           </>
         )}
 
-        {project.webLink && ExternalLink && (
-          <div className="mt-4 ml-6 sm:ml-7">
-             <a
-              href={project.webLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] hover:bg-[var(--modal-button-hover-background)] rounded-lg text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-border)] transition-colors shadow-sm"
-            >
-              <ExternalLink size={14} className="mr-1.5 sm:mr-2" />
-              Visit Website
-            </a>
-          </div>
+        {lightboxIndex !== null && images.length > 0 && (
+          <ImageLightbox
+            images={images}
+            index={lightboxIndex}
+            title={project.title}
+            onIndexChange={setLightboxIndex}
+            onClose={() => setLightboxIndex(null)}
+          />
         )}
       </div>
     );
@@ -350,13 +467,18 @@ const JsonPreviewView: React.FC<JsonPreviewViewProps> = ({ jsonData, fileId, por
               <div>
                 <div className="flex items-center text-[var(--text-accent)] mb-2">
                   <PhoneIcon size={16} className="mr-2" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Phone Number</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">Phone / WhatsApp</span>
                 </div>
-                <p className="text-sm font-semibold text-[var(--editor-foreground)]">{phone}</p>
+                <p className="text-sm font-semibold text-[var(--editor-foreground)]">{toInternationalPhone(phone).display}</p>
               </div>
-              <a href={`tel:${phone}`} className="mt-4 inline-flex items-center justify-center text-xs font-bold px-3 py-2 bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] rounded-lg hover:bg-[var(--modal-button-hover-background)] transition-colors duration-200">
-                Call Now
-              </a>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <a href={`https://wa.me/${toInternationalPhone(phone).digits}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors duration-200">
+                  <MessageCircle size={14} /> WhatsApp
+                </a>
+                <a href={`tel:+${toInternationalPhone(phone).digits}`} className="inline-flex items-center justify-center text-xs font-bold px-3 py-2 bg-[var(--modal-button-background)] text-[var(--modal-button-foreground)] rounded-lg hover:bg-[var(--modal-button-hover-background)] transition-colors duration-200">
+                  Call
+                </a>
+              </div>
             </div>
           )}
 
@@ -370,7 +492,7 @@ const JsonPreviewView: React.FC<JsonPreviewViewProps> = ({ jsonData, fileId, por
                 <p className="text-sm font-semibold text-[var(--editor-foreground)]">{address.full}</p>
               </div>
               <span className="mt-4 text-[10px] text-[var(--text-muted)] font-medium text-center italic">
-                Indramayu, West Java, Indonesia
+                Available for remote or on-site roles
               </span>
             </div>
           )}
@@ -403,6 +525,8 @@ const JsonPreviewView: React.FC<JsonPreviewViewProps> = ({ jsonData, fileId, por
               Connect on social platforms
             </span>
           </div>
+
+          <ContactComposer email={email} whatsappDigits={phone ? toInternationalPhone(phone).digits : undefined} />
         </div>
       </div>
     );
