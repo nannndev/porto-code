@@ -24,58 +24,191 @@ function getAudioContext(): AudioContext | null {
   return audioContext;
 }
 
-// Synthetic sound definitions for all sound names used across the app.
-// These use simple oscillators for reliable, lightweight UI feedback without external files.
-interface SoundPreset {
-  type: OscillatorType;
+// ---------------------------------------------------------------------------
+// Sound design
+// ---------------------------------------------------------------------------
+// UI sounds are synthesized with the Web Audio API (no audio files to load).
+// They are built to stay out of the way:
+// - soft waveforms (sine/triangle) and filtered noise "ticks" instead of raw
+//   square/sawtooth waves, which sound buzzy;
+// - a short attack plus exponential decay on every voice, so nothing starts
+//   or ends with an audible click;
+// - notes picked from one pentatonic scale, so overlapping sounds stay in tune;
+// - a quiet master bus with a compressor, so bursts of sounds never clip.
+
+interface ToneVoice {
+  kind: 'tone';
+  wave: 'sine' | 'triangle';
   frequency: number;
-  duration: number;
-  volume?: number;
-  frequencyEnd?: number; // For frequency sweep effects
+  frequencyEnd?: number; // Optional pitch glide over the decay
+  gain: number;
+  attack?: number; // seconds
+  decay: number; // seconds
+  delay?: number; // seconds after the sound starts
+  overtone?: number; // Relative level of a soft octave partial, for bell-like tones
+}
+
+interface NoiseVoice {
+  kind: 'noise';
+  filter: BiquadFilterType;
+  frequency: number;
+  q?: number;
+  gain: number;
+  attack?: number;
+  decay: number;
   delay?: number;
 }
 
-const SYNTHETIC_SOUNDS: { [key: string]: SoundPreset | SoundPreset[] } = {
-  // Most common UI interactions
-  'ui-click': { type: 'square', frequency: 820, duration: 35, volume: 0.12 },
-  
-  // Tab operations (slightly different flavors)
-  'tab-open': { type: 'sine', frequency: 680, duration: 55, volume: 0.15 },
-  'tab-close': { type: 'sine', frequency: 520, duration: 60, volume: 0.13 },
-  'tab-select': { type: 'square', frequency: 880, duration: 28, volume: 0.1 },
-  
-  // Panel / sidebar toggles
-  'panel-toggle': { type: 'sine', frequency: 610, duration: 70, volume: 0.14 },
-  
-  // Modals and command palette
-  'modal-toggle': { type: 'sine', frequency: 750, duration: 80, volume: 0.16 },
-  
-  // Terminal actions
-  'terminal-run': { type: 'sawtooth', frequency: 420, duration: 90, volume: 0.11 },
-  'terminal-complete': [
-    { type: 'sine', frequency: 680, duration: 60, volume: 0.13 },
-    { type: 'sine', frequency: 920, duration: 70, volume: 0.11, delay: 55 }
-  ],
-  
-  // Settings / theme changes (positive confirmation feel)
-  'setting-change': { type: 'sine', frequency: 780, duration: 65, volume: 0.14 },
-  
-  // Command / run actions
-  'command-execute': { type: 'square', frequency: 640, duration: 48, volume: 0.12 },
-  
-  // Error / warning feedback (lower, harsher)
-  'error': { type: 'sawtooth', frequency: 180, duration: 120, volume: 0.18 },
-  
-  // Chat / notification sounds (gentle)
-  'chat-receive': { type: 'sine', frequency: 880, duration: 90, volume: 0.15 },
-  'notification': { type: 'sine', frequency: 920, duration: 75, volume: 0.16 },
+type Voice = ToneVoice | NoiseVoice;
+
+// Notes (Hz) from a D major pentatonic scale.
+const NOTE = {
+  D4: 293.66, E4: 329.63, A4: 440.0, B4: 493.88,
+  D5: 587.33, E5: 659.25, Fs5: 739.99, A5: 880.0, B5: 987.77,
+  D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760.0,
 };
 
+const tick = (frequency: number, gain: number): NoiseVoice =>
+  ({ kind: 'noise', filter: 'bandpass', frequency, q: 1.4, gain, attack: 0.001, decay: 0.022 });
+
+const SOUNDS: Record<string, Voice[]> = {
+  // Most frequent interaction: a quiet, short tap rather than a beep.
+  'ui-click': [
+    tick(3200, 0.22),
+    { kind: 'tone', wave: 'sine', frequency: 1600, frequencyEnd: 1200, gain: 0.025, attack: 0.001, decay: 0.03 },
+  ],
+  'tab-select': [tick(4200, 0.22)],
+  'tab-open': [
+    tick(3000, 0.12),
+    { kind: 'tone', wave: 'sine', frequency: NOTE.A5, frequencyEnd: NOTE.D6, gain: 0.05, decay: 0.09 },
+  ],
+  'tab-close': [
+    tick(2400, 0.14),
+    { kind: 'tone', wave: 'sine', frequency: NOTE.D6, frequencyEnd: NOTE.A5, gain: 0.04, decay: 0.08 },
+  ],
+  // Soft "swish" for panels and the sidebar.
+  'panel-toggle': [
+    { kind: 'noise', filter: 'bandpass', frequency: 1400, q: 0.8, gain: 0.09, attack: 0.012, decay: 0.08 },
+    { kind: 'tone', wave: 'triangle', frequency: NOTE.D5, frequencyEnd: NOTE.E5, gain: 0.03, decay: 0.08 },
+  ],
+  'modal-toggle': [
+    { kind: 'tone', wave: 'sine', frequency: NOTE.D5, gain: 0.05, decay: 0.12, overtone: 0.2 },
+    { kind: 'tone', wave: 'sine', frequency: NOTE.A5, gain: 0.04, decay: 0.14, delay: 0.035, overtone: 0.2 },
+  ],
+  'command-execute': [
+    tick(3600, 0.1),
+    { kind: 'tone', wave: 'sine', frequency: NOTE.E5, gain: 0.045, decay: 0.09 },
+    { kind: 'tone', wave: 'sine', frequency: NOTE.B5, gain: 0.04, decay: 0.12, delay: 0.045 },
+  ],
+  'setting-change': [
+    { kind: 'tone', wave: 'sine', frequency: NOTE.A5, gain: 0.045, decay: 0.09, overtone: 0.15 },
+    { kind: 'tone', wave: 'sine', frequency: NOTE.E6, gain: 0.035, decay: 0.12, delay: 0.05, overtone: 0.15 },
+  ],
+  'terminal-run': [
+    { kind: 'tone', wave: 'triangle', frequency: NOTE.D4, frequencyEnd: NOTE.A4, gain: 0.05, attack: 0.01, decay: 0.12 },
+    tick(2000, 0.08),
+  ],
+  // Rising arpeggio: something finished successfully.
+  'terminal-complete': [
+    { kind: 'tone', wave: 'sine', frequency: NOTE.D6, gain: 0.045, decay: 0.22, overtone: 0.25 },
+    { kind: 'tone', wave: 'sine', frequency: NOTE.Fs6, gain: 0.04, decay: 0.24, delay: 0.07, overtone: 0.25 },
+    { kind: 'tone', wave: 'sine', frequency: NOTE.A6, gain: 0.035, decay: 0.32, delay: 0.14, overtone: 0.25 },
+  ],
+  'chat-receive': [
+    { kind: 'tone', wave: 'sine', frequency: NOTE.B5, gain: 0.05, decay: 0.14, overtone: 0.2 },
+    { kind: 'tone', wave: 'sine', frequency: NOTE.E6, gain: 0.045, decay: 0.22, delay: 0.08, overtone: 0.2 },
+  ],
+  'notification': [
+    { kind: 'tone', wave: 'sine', frequency: NOTE.A5, gain: 0.05, decay: 0.2, overtone: 0.3 },
+    { kind: 'tone', wave: 'sine', frequency: NOTE.D6, gain: 0.045, decay: 0.32, delay: 0.09, overtone: 0.3 },
+  ],
+  // Low, rounded falling pair: noticeable but not harsh.
+  'error': [
+    { kind: 'tone', wave: 'triangle', frequency: NOTE.E4, gain: 0.08, attack: 0.008, decay: 0.12 },
+    { kind: 'tone', wave: 'triangle', frequency: NOTE.D4 * 0.75, gain: 0.08, attack: 0.008, decay: 0.2, delay: 0.1 },
+  ],
+};
+
+const MASTER_VOLUME = 1.6;
+const MIN_REPEAT_INTERVAL_MS = 45; // Same sound fired in a burst (e.g. key repeat) plays once.
+
+let masterBus: GainNode | null = null;
+let noiseBuffer: AudioBuffer | null = null;
+const lastPlayedAt: Record<string, number> = {};
+
+function getMasterBus(ctx: AudioContext): GainNode {
+  if (!masterBus) {
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -18;
+    compressor.knee.value = 12;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.15;
+    compressor.connect(ctx.destination);
+
+    masterBus = ctx.createGain();
+    masterBus.gain.value = MASTER_VOLUME;
+    masterBus.connect(compressor);
+  }
+  return masterBus;
+}
+
+function getNoiseBuffer(ctx: AudioContext): AudioBuffer {
+  if (!noiseBuffer) {
+    noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  }
+  return noiseBuffer;
+}
+
+function playVoice(ctx: AudioContext, voice: Voice, startAt: number): void {
+  const t0 = startAt + (voice.delay ?? 0);
+  const attack = voice.attack ?? 0.004;
+  const end = t0 + attack + voice.decay;
+
+  const envelope = ctx.createGain();
+  envelope.gain.setValueAtTime(0.0001, t0);
+  envelope.gain.exponentialRampToValueAtTime(voice.gain, t0 + attack);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, end);
+  envelope.connect(getMasterBus(ctx));
+
+  if (voice.kind === 'noise') {
+    const source = ctx.createBufferSource();
+    source.buffer = getNoiseBuffer(ctx);
+    const filter = ctx.createBiquadFilter();
+    filter.type = voice.filter;
+    filter.frequency.value = voice.frequency;
+    filter.Q.value = voice.q ?? 1;
+    source.connect(filter);
+    filter.connect(envelope);
+    source.start(t0, Math.random() * 0.3);
+    source.stop(end + 0.02);
+    return;
+  }
+
+  const partials: Array<[number, number]> = [[1, 1]];
+  if (voice.overtone) partials.push([2, voice.overtone]);
+  for (const [multiple, level] of partials) {
+    const osc = ctx.createOscillator();
+    osc.type = voice.wave;
+    osc.frequency.setValueAtTime(voice.frequency * multiple, t0);
+    if (voice.frequencyEnd) {
+      osc.frequency.exponentialRampToValueAtTime(voice.frequencyEnd * multiple, end);
+    }
+    const partialGain = ctx.createGain();
+    partialGain.gain.value = level;
+    osc.connect(partialGain);
+    partialGain.connect(envelope);
+    osc.start(t0);
+    osc.stop(end + 0.02);
+  }
+}
+
 /**
- * Plays a short synthetic tone using Web Audio API.
- * Falls back silently if AudioContext is unavailable.
+ * Plays a synthesized UI sound. Falls back silently if Web Audio is unavailable.
  */
-function playSyntheticSound(preset: SoundPreset | SoundPreset[]): void {
+function playSynthSound(voices: Voice[]): void {
   const ctx = getAudioContext();
   if (!ctx) return;
 
@@ -84,68 +217,33 @@ function playSyntheticSound(preset: SoundPreset | SoundPreset[]): void {
     ctx.resume().catch(() => {});
   }
 
-  const playOne = (p: SoundPreset, startTimeOffset = 0) => {
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const filter = ctx.createBiquadFilter();
-
-      osc.type = p.type;
-      osc.frequency.value = p.frequency;
-
-      // Light low-pass filter for softer UI sounds
-      filter.type = 'lowpass';
-      filter.frequency.value = 2200;
-
-      // Volume envelope
-      const volume = p.volume ?? 0.12;
-      gain.gain.value = volume;
-
-      // Simple attack/decay envelope
-      const now = ctx.currentTime + startTimeOffset / 1000;
-      gain.gain.setValueAtTime(volume, now);
-      gain.gain.linearRampToValueAtTime(0.0001, now + p.duration / 1000 + 0.03);
-
-      // Optional frequency sweep (nice for some sounds)
-      if (p.frequencyEnd) {
-        osc.frequency.setValueAtTime(p.frequency, now);
-        osc.frequency.linearRampToValueAtTime(p.frequencyEnd, now + p.duration / 1000);
-      }
-
-      // Connect graph
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + p.duration / 1000 + 0.06);
-    } catch (e) {
-      // Fail silently — sound is non-critical
-    }
-  };
-
-  if (Array.isArray(preset)) {
-    preset.forEach(p => playOne(p, p.delay ?? 0));
-  } else {
-    playOne(preset);
+  try {
+    const startAt = ctx.currentTime + 0.005;
+    voices.forEach(voice => playVoice(ctx, voice, startAt));
+  } catch (e) {
+    // Fail silently — sound is non-critical
   }
 }
 
 /**
  * Plays a sound effect by its logical name.
- * Uses synthetic Web Audio tones for reliable feedback without external assets.
+ * Sounds are synthesized with Web Audio (see SOUNDS above); no audio files are loaded.
  */
 export function playSound(soundName: string): void {
   if (!SOUNDS_ENABLED) return;
   if (isMuted) return;
 
-  const preset = SYNTHETIC_SOUNDS[soundName];
-  if (!preset) {
+  const voices = SOUNDS[soundName];
+  if (!voices) {
     // Unknown sound name — do nothing (keeps behavior consistent with before)
     return;
   }
 
-  playSyntheticSound(preset);
+  const now = performance.now();
+  if (now - (lastPlayedAt[soundName] ?? -Infinity) < MIN_REPEAT_INTERVAL_MS) return;
+  lastPlayedAt[soundName] = now;
+
+  playSynthSound(voices);
 }
 
 /**

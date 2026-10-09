@@ -128,7 +128,6 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
             <button
               className={`w-full text-left px-3 py-1.5 text-xs flex justify-between items-center transition-colors
                           ${subItem.isSelected ? 'bg-[var(--menu-item-selected-background)] text-[var(--menu-item-selected-foreground)]' : 'hover:bg-[var(--menu-item-hover-background)] hover:text-[var(--menu-item-hover-foreground)]'}`}
-              onMouseEnter={() => playSound('ui-click')}
             >
               <div className="flex items-center">
                 {subItem.icon && <subItem.icon size={14} className="mr-2 text-[var(--menu-item-icon-foreground)]" />}
@@ -154,7 +153,6 @@ export const TitleBar: React.FC<TitleBarProps> = (props) => {
             }}
             className={`w-full text-left px-3 py-1.5 text-xs flex items-center transition-colors
                         ${subItem.isSelected ? 'bg-[var(--menu-item-selected-background)] text-[var(--menu-item-selected-foreground)]' : 'hover:bg-[var(--menu-item-hover-background)] hover:text-[var(--menu-item-hover-foreground)]'}`}
-             onMouseEnter={() => playSound('ui-click')}
           >
             {subItem.icon && <subItem.icon size={14} className={`mr-2 ${subItem.isSelected ? 'text-[var(--menu-item-selected-foreground)]' : 'text-[var(--menu-item-icon-foreground)]'}`} />}
             <span className="flex-grow">{subItem.label}</span>
